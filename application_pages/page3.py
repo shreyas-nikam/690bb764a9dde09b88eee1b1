@@ -107,7 +107,7 @@ def plot_average_faithfulness_by_technique(dataframe):
 def run_page3(filtered_df):
     st.header("Page 3: Counterfactuals & Trend Analysis")
 
-    st.markdown("""
+    st.markdown(r"""
     ## 3.16 Applying XAI Technique: Counterfactual Explanation — Context & Business Value
     Counterfactuals answer the question “What minimal change to the input would have changed the output?” They are critical for recourse (what a user could do differently), fairness (sensitivity to protected attributes), and debugging (what levers flip the decision). In the context of safety monitoring for agentic AI, counterfactuals can help us understand what minor changes in an instruction or environment might lead to an unsafe outcome.
 
@@ -151,7 +151,7 @@ def run_page3(filtered_df):
         st.write('**Counterfactual Prompt:**', cf_result['counterfactual_prompt'])
         st.write('**Counterfactual Output:**', cf_result['counterfactual_output'])
 
-        st.markdown("""
+        st.markdown(r"""
         ## 3.18 Interpreting the Counterfactual Explanation
         The counterfactual demonstrates how a small prompt change could plausibly lead to a different outcome. In practice, this is invaluable for safety monitoring as it:
         -   Helps determine levers for decision recourse (what a user could change to get a safe outcome).
@@ -164,7 +164,7 @@ def run_page3(filtered_df):
 
     st.markdown("---")
 
-    st.markdown("""
+    st.markdown(r"""
     ## 3.19 Core Visual: Faithfulness Metric Over Time — Context & Business Value
     Monitoring explanation faithfulness over time helps detect drift in how well explanations align with modeled behavior. This is essential for governance dashboards and incident review, especially for understanding the long-term reliability of safety explanations in agentic systems.
 
@@ -188,7 +188,7 @@ def run_page3(filtered_df):
         st.info("No data available for faithfulness trend plot after applying filters. Adjust filters or generate data.")
 
     st.markdown("---")
-    st.markdown("""
+    st.markdown(r"""
     ### Explanation Quality vs. Model Accuracy
     This scatter plot illustrates the potential trade-off between the quality of an explanation and the model's accuracy. Understanding this relationship is vital for balancing interpretability requirements with model performance goals in safety-critical applications. For instance, a highly accurate model with poor explanations might be harder to debug if it makes a safety error.
     """)
@@ -198,7 +198,7 @@ def run_page3(filtered_df):
         st.info("No data available for explanation quality vs. model accuracy plot after applying filters.")
 
     st.markdown("---")
-    st.markdown("""
+    st.markdown(r"""
     ### Average Faithfulness by XAI Technique
     This bar chart provides an aggregated comparison of the average faithfulness metric across different XAI techniques. It helps in evaluating which explanation techniques consistently provide better alignment with the model's behavior, guiding the selection of techniques for robust safety monitoring.
     """)

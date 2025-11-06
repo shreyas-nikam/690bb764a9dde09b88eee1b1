@@ -55,7 +55,7 @@ def visualize_saliency_map(llm_output, token_scores_df, output_index, threshold=
 def run_page2(filtered_df):
     st.header("Page 2: XAI Concepts & Saliency Map")
 
-    st.markdown("""
+    st.markdown(r"""
     ## 3.11 Interpretability vs. Transparency
     -   **Interpretability**: understanding why the model produced a specific output for a given input; focuses on input–output relationships.
     -   **Transparency**: understanding how the model works internally (architecture, training data, parameters). For large LLMs, this is often infeasible in practice.
@@ -63,7 +63,7 @@ def run_page2(filtered_df):
     Business impact: When full transparency is not possible, strong interpretability (clear rationales, salient inputs, counterfactuals) supports audits, incident response, and policy compliance without exposing proprietary internals. In safety monitoring, interpretability is crucial for quickly identifying the root causes of unsafe AI behaviors.
     """)
 
-    st.markdown("""
+    st.markdown(r"""
     ## 3.12 Introduction to XAI Techniques (Saliency and Counterfactuals)
 
     -   **Saliency Maps**: Highlight which input tokens most influenced an output. Conceptually, token importance can be related to local sensitivity of the output with respect to an input token:
@@ -77,7 +77,7 @@ def run_page2(filtered_df):
     Business value: Saliency sharpens local interpretability for specific outputs; counterfactuals reveal levers that alter outcomes—both are essential for audits, compliance, and user trust, especially in safety-critical agentic systems.
     """)
 
-    st.markdown("""
+    st.markdown(r"""
     ## 3.7 Generating Synthetic Saliency Data — Context & Business Value
     We simulate token-level saliency scores to conceptually indicate which words in an LLM output were most influential. While these scores are synthetic (random), they let us:
     -   Demonstrate how token attribution can be visualized and audited.
@@ -100,7 +100,7 @@ def run_page2(filtered_df):
         st.write(f"Shape of saliency data: {st.session_state['df_saliency'].shape}")
         st.dataframe(st.session_state['df_saliency'].head(10))
         
-        st.markdown("""
+        st.markdown(r"""
         ## 3.8 Interpretation: What the Saliency Table Shows
         -   Each row corresponds to a token from one of the LLM outputs and its synthetic saliency score in $[0,1]$.
         -   Higher scores suggest a stronger conceptual contribution of that token to the output.
@@ -108,7 +108,7 @@ def run_page2(filtered_df):
         """)
 
         st.markdown("---")
-        st.markdown("""
+        st.markdown(r"""
         ## 3.13 Applying XAI Technique: Saliency Map Simulation — Context & Business Value
         Saliency maps help reviewers quickly identify which words in an output likely drove the model’s behavior. This accelerates root-cause analysis in incident reviews and supports explainability audits without revealing proprietary internals, which is critical for safety monitoring of agentic systems.
 
@@ -155,7 +155,7 @@ def run_page2(filtered_df):
         else:
             st.info("Please generate LLM interaction data in Page 1 to simulate saliency maps.")
 
-        st.markdown("""
+        st.markdown(r"""
         ## 3.15 Interpreting the Saliency Map
         The highlighted words represent tokens with saliency scores above the chosen threshold ($\tau = 0.7$). In a real system, these would indicate which parts of the text most influenced the model’s output. This helps reviewers, especially in safety monitoring:
         -   Quickly spot decisive phrases related to safety risks.

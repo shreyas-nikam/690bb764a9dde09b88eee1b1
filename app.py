@@ -19,7 +19,7 @@ st.sidebar.image("https://www.quantuniversity.com/assets/img/logo5.jpg")
 st.sidebar.divider()
 st.title("QuLab")
 st.divider()
-st.markdown("""
+st.markdown(r"""
 ## Agentic AI for Safety Monitoring: An Explainable AI Lab
 
 In this lab, we explore the critical role of Explainable AI (XAI) in understanding and monitoring Large Language Models (LLMs) within agentic systems, particularly for safety. As AI agents become more autonomous, ensuring their decisions are transparent, justifiable, and safe is paramount. This application provides a hands-on, end-to-end walkthrough using synthetic data to demonstrate how XAI concepts and techniques can be applied in practice.

@@ -88,7 +88,7 @@ def validate_and_summarize_data(dataframe: pd.DataFrame):
 def run_page1(filtered_df):
     st.header("Page 1: Introduction & Data Setup")
 
-    st.markdown("""
+    st.markdown(r"""
     ## Executive Summary
     This application provides a compact, end-to-end, business-oriented introduction to Explainable AI (XAI) for Large Language Models (LLMs) using synthetic data and lightweight visualizations. It focuses on the context of **Agentic AI for Safety Monitoring**, where understanding model behavior is crucial.
 
@@ -105,7 +105,7 @@ def run_page1(filtered_df):
     - Each step includes a short narrative and code comments explaining what and why.
     """)
 
-    st.markdown("""
+    st.markdown(r"""
     ## Data and Inputs Overview
 
     -   **Inputs**: This application uses fully synthetic data by default to simulate LLM prompts, outputs, and XAI-related metrics (confidence, accuracy, explanation quality, faithfulness, technique label). An option to upload custom data will also be provided.
@@ -116,7 +116,7 @@ def run_page1(filtered_df):
     All code executes locally and uses only open-source packages.
     """)
 
-    st.markdown("""
+    st.markdown(r"""
     ## Methodology Overview
 
     We simulate a lightweight analytics pipeline for explainable LLM behavior using synthetic data. The pipeline mirrors a typical model governance workflow relevant for safety monitoring:
@@ -136,7 +136,7 @@ def run_page1(filtered_df):
     -   Explainability reduces operational risk (model audits), accelerates root-cause analysis (incident response), and improves user trust (comms & compliance). The visuals we produce are the backbone of explainability reporting in production dashboards.
     """)
 
-    st.markdown("""
+    st.markdown(r"""
     ## 3.1 Introduction to Explainable AI (XAI)
 
     Explainable AI (XAI) aims to make model behavior understandable to humans. For Large Language Models (LLMs), explanations help stakeholders assess risks, justify decisions, and comply with governance, especially in safety-critical domains.
@@ -147,7 +147,7 @@ def run_page1(filtered_df):
     In practice, we treat LLMs as black boxes and use interpretability techniques (e.g., saliency, counterfactuals) to reason about outputs and calibrate trust. This is particularly important for safety monitoring, where unexpected or harmful behaviors must be quickly identified and understood.
     """)
 
-    st.markdown("""
+    st.markdown(r"""
     ## 3.3 Overview of Synthetic Data Generation
 
     We will generate synthetic LLM interaction data to safely illustrate XAI concepts without requiring a live model. This provides a controlled, fast-to-run sandbox that mirrors telemetry you might collect in production (prompts, outputs, confidence, accuracy, explanation quality, faithfulness, technique labels).
@@ -158,7 +158,7 @@ def run_page1(filtered_df):
     -   Produces reproducible examples to train reviewers and align stakeholders on interpreting safety-critical explanations.
     """)
     
-    st.markdown("""
+    st.markdown(r"""
     ## 3.4 Generating Core Synthetic LLM Interaction Data — Context & Business Value
     We need a realistic yet lightweight dataset that mirrors what product analytics and governance teams monitor: prompts, outputs, confidence, accuracy, explanation quality, faithfulness, and technique labels. This enables:
     -   Rapid stress-testing of explainability reports before production data pipelines exist.
@@ -209,7 +209,7 @@ def run_page1(filtered_df):
         st.write(f"Shape of the dataset: {st.session_state['df_llm_data'].shape}")
         st.dataframe(st.session_state['df_llm_data'].head())
 
-        st.markdown("""
+        st.markdown(r"""
         ## 3.6 Explanation of the Synthetic Dataset
         The generated dataset (`df_llm_data`) mirrors common telemetry fields used in model monitoring:
         -   `timestamp`: when the interaction occurred; supports trend analysis and seasonality checks.
@@ -225,7 +225,7 @@ def run_page1(filtered_df):
         Business takeaway: These fields are enough to build explainability dashboards, route triage by confidence, and demonstrate governance controls without access to proprietary data or live models.
         """)
 
-        st.markdown("""
+        st.markdown(r"""
         ## Optional: Quick Sanity Check Metric (Accuracy)
         As a simple governance check, we can compare a heuristic “predicted correctness” (e.g., confidence $\ge 0.75$) to the simulated binary accuracy flag via accuracy score. This is not a model evaluation, just a diagnostic to illustrate how monitoring hooks into basic metrics.
 
@@ -244,13 +244,13 @@ def run_page1(filtered_df):
         match_rate = (heuristic_correct == st.session_state['df_llm_data']['model_accuracy']).mean()
         st.info(f"Heuristic (confidence $\ge$ {heuristic_threshold}) vs. simulated accuracy agreement: **{match_rate:.3f}**")
 
-        st.markdown("""
+        st.markdown(r"""
         ## Optional Result Interpretation: Heuristic Agreement
         The printed agreement rate shows how often a simple confidence-based heuristic aligns with the simulated accuracy flag. A higher value suggests confidence is a reasonable proxy for correctness; a lower value warns that confidence alone may be misleading. In governance, such diagnostics inform threshold setting for human-in-the-loop review.
         """)
 
         st.markdown("---")
-        st.markdown("""
+        st.markdown(r"""
         ## 3.9 Data Validation and Summary Statistics — Executable Code
         After data generation or upload, it's crucial to validate the data structure and summarize its key characteristics. This step ensures data quality and provides a quick overview of the dataset's contents before proceeding with XAI analysis.
         """)
