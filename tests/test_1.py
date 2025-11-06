@@ -1,92 +1,70 @@
 import pytest
 import pandas as pd
-import numpy as np
+from pandas.testing import assert_frame_equal
+from definition_270f429e2dd449b0ac1c649a1c6a0492 import generate_saliency_data
 
-# Keep a placeholder definition_7ab21017b8bb4e22ad517a8b557e68fa for the import of the module. Keep the `your_module` block as it is. DO NOT REPLACE or REMOVE the block.
-from definition_7ab21017b8bb4e22ad517a8b557e68fa import generate_saliency_data
-# End of definition_7ab21017b8bb4e22ad517a8b557e68fa block
+def test_generate_saliency_data_happy_path():
+    """
+    Tests the basic functionality with a standard pandas Series input.
+    Verifies the output DataFrame's structure, content, and data types.
+    """
+    llm_outputs = pd.Series(["hello world", "test sentence"])
+    result_df = generate_saliency_data(llm_outputs)
 
-@pytest.mark.parametrize(
-    "llm_outputs_input, expected_type, expected_exception, expected_row_count_if_df",
-    [
-        # Test Case 1: Standard valid input with multiple outputs and tokens
-        # Expects a DataFrame with 8 rows (5 tokens from first string, 3 from second).
-        (
-            pd.Series(["This is a test sentence.", "Another example output."]),
-            pd.DataFrame,
-            None,
-            8
-        ),
-        # Test Case 2: Empty pandas Series
-        # Expects an empty DataFrame.
-        (
-            pd.Series([]),
-            pd.DataFrame,
-            None,
-            0
-        ),
-        # Test Case 3: Pandas Series with empty strings, strings with only spaces, and a valid string
-        # Expects a DataFrame with 2 rows (only from "Hello world").
-        (
-            pd.Series(["", "   ", "Hello world"]),
-            pd.DataFrame,
-            None,
-            2
-        ),
-        # Test Case 4: Non-pandas Series input (e.g., a list of strings)
-        # Expects an AttributeError because the function likely assumes `llm_outputs` is a Series
-        # and attempts to use Series-specific methods.
-        (
-            ["Just a list item"],
-            None,
-            AttributeError,
-            None
-        ),
-        # Test Case 5: Pandas Series containing non-string elements (e.g., int, None)
-        # Expects a TypeError when the internal tokenization (e.g., `.split()`) is applied to non-string types.
-        (
-            pd.Series(["valid string", 123, None, "another one"]),
-            None,
-            TypeError,
-            None
-        ),
-    ]
-)
-def test_generate_saliency_data(llm_outputs_input, expected_type, expected_exception, expected_row_count_if_df):
-    if expected_exception:
-        # If an exception is expected, assert that the function call raises it
-        with pytest.raises(expected_exception):
-            generate_saliency_data(llm_outputs_input)
-    else:
-        # Assuming the function is correctly implemented according to its specification
-        result_df = generate_saliency_data(llm_outputs_input)
+    assert isinstance(result_df, pd.DataFrame)
+    assert list(result_df.columns) == ['output_index', 'token', 'saliency_score']
+    assert len(result_df) == 4  # 2 tokens from first string, 2 from second
+    assert result_df['output_index'].to_list() == [0, 0, 1, 1]
+    assert result_df['token'].to_list() == ['hello', 'world', 'test', 'sentence']
+    assert pd.api.types.is_float_dtype(result_df['saliency_score'])
+    assert all(0.0 <= score <= 1.0 for score in result_df['saliency_score'])
 
-        # Assert the overall type of the returned value
-        assert isinstance(result_df, expected_type)
+def test_generate_saliency_data_empty_series():
+    """
+    Tests the edge case where the input is an empty pandas Series.
+    The function should return an empty DataFrame with the correct columns and dtypes.
+    """
+    llm_outputs = pd.Series([], dtype=str)
+    result_df = generate_saliency_data(llm_outputs)
 
-        # Define the expected column names for the output DataFrame
-        expected_cols = ['output_index', 'token', 'saliency_score']
+    expected_df = pd.DataFrame({
+        'output_index': pd.Series([], dtype='int64'),
+        'token': pd.Series([], dtype='object'),
+        'saliency_score': pd.Series([], dtype='float64')
+    })
+    
+    assert_frame_equal(result_df, expected_df, check_index_type=False)
 
-        # Check if the DataFrame contains all expected columns and no extra ones
-        assert all(col in result_df.columns for col in expected_cols)
-        assert len(result_df.columns) == len(expected_cols)
+def test_generate_saliency_data_with_empty_and_whitespace_strings():
+    """
+    Tests behavior with strings that result in no tokens (empty or whitespace-only).
+    Ensures that these strings do not produce any rows in the output DataFrame.
+    """
+    llm_outputs = pd.Series(["first sentence", "", "  ", "last one"], index=[10, 20, 30, 40])
+    result_df = generate_saliency_data(llm_outputs)
 
-        if expected_row_count_if_df == 0:
-            # If an empty DataFrame is expected, verify it is indeed empty
-            assert result_df.empty
-        else:
-            # For non-empty expected output, verify it's not empty and has the correct number of rows
-            assert not result_df.empty
-            assert len(result_df) == expected_row_count_if_df
+    assert len(result_df) == 4  # "first", "sentence", "last", "one"
+    assert result_df['output_index'].to_list() == [10, 10, 40, 40]
+    assert result_df['token'].to_list() == ['first', 'sentence', 'last', 'one']
 
-            # Check data types of the columns
-            assert pd.api.types.is_integer_dtype(result_df['output_index'])
-            assert pd.api.types.is_string_dtype(result_df['token'])
-            assert pd.api.types.is_float_dtype(result_df['saliency_score'])
+def test_generate_saliency_data_preserves_custom_index():
+    """
+    Tests that the function correctly uses a custom non-sequential Series index
+    for the 'output_index' column in the resulting DataFrame.
+    """
+    llm_outputs = pd.Series(["custom index test"], index=[99])
+    result_df = generate_saliency_data(llm_outputs)
 
-            # Check that saliency scores are within the expected range [0, 1]
-            assert (result_df['saliency_score'] >= 0).all()
-            assert (result_df['saliency_score'] <= 1).all()
+    assert len(result_df) == 3
+    assert all(idx == 99 for idx in result_df['output_index'])
+    assert result_df['token'].to_list() == ['custom', 'index', 'test']
 
-            # Check that token strings are not empty after tokenization
-            assert (result_df['token'].astype(str).str.len() > 0).all()
+def test_generate_saliency_data_invalid_input_type():
+    """
+    Tests that the function raises an AttributeError when the input is not a
+    pandas Series, as it relies on Series-specific methods.
+    """
+    with pytest.raises(AttributeError):
+        # A list does not have the .items() method required by the function.
+        generate_saliency_data(["this is", "not a pandas series"])
+
