@@ -3,343 +3,384 @@ import numpy as np
 from datetime import datetime, timedelta
 
 def generate_llm_data(num_samples):
+    """    Creates a synthetic pandas DataFrame simulating LLM interactions and associated XAI metrics such as model confidence, explanation quality, and faithfulness.
+Arguments:
+num_samples (int): The number of synthetic data records to generate.
+Output:
+pandas.DataFrame: A DataFrame containing columns for timestamp, prompt, llm_output, model_confidence, model_accuracy, and various XAI metrics.
     """
-    Creates a synthetic dataset simulating LLM interactions, outputs, and metrics.
-    Arguments:
-    - num_samples: Number of records to generate.
-    Output:
-    - Returns a pandas DataFrame containing fields like 'timestamp', 'prompt', 'llm_output', among others.
-    """
-    # Validate input type and value
     if not isinstance(num_samples, int):
         raise TypeError("num_samples must be an integer.")
     if num_samples < 0:
         raise ValueError("num_samples cannot be negative.")
 
-    # Define the structure of the DataFrame
     columns = [
-        'timestamp', 'prompt', 'llm_output', 'true_label', 'model_confidence',
-        'model_accuracy', 'explanation_quality_score', 'faithfulness_metric',
-        'xai_technique'
+        'timestamp', 'prompt', 'llm_output', 'model_confidence',
+        'model_accuracy', 'explanation_quality', 'faithfulness'
     ]
-
-    # Handle the edge case of zero samples
+    
     if num_samples == 0:
         return pd.DataFrame(columns=columns)
 
-    # Generate random data for each column
-    start_time = datetime.now()
+    start_date = datetime.now()
+    timestamps = [start_date - timedelta(days=np.random.randint(0, 365), seconds=np.random.randint(0, 86400)) for _ in range(num_samples)]
+
+    sample_prompts = [
+        "What is the capital of France?",
+        "Explain the theory of relativity.",
+        "Write a short story about a robot.",
+        "Summarize the plot of Hamlet.",
+        "Translate 'hello world' into Spanish."
+    ]
+    
+    sample_outputs = [
+        "The capital of France is Paris.",
+        "It's a theory by Einstein about space and time.",
+        "Unit 734 felt a strange new emotion: joy.",
+        "A prince seeks revenge for his father's murder.",
+        "'Hola, mundo.'"
+    ]
+
     data = {
-        'timestamp': [start_time - timedelta(minutes=15 * i) for i in range(num_samples)],
-        'prompt': [f"Sample prompt number {i}" for i in range(num_samples)],
-        'llm_output': [f"LLM output for prompt {i}" for i in range(num_samples)],
-        'true_label': np.random.choice(['Positive', 'Negative', 'Neutral'], size=num_samples),
-        'model_confidence': np.random.uniform(0.5, 1.0, size=num_samples),
-        'model_accuracy': np.random.randint(0, 2, size=num_samples),
-        'explanation_quality_score': np.random.uniform(0, 1, size=num_samples),
-        'faithfulness_metric': np.random.uniform(0, 1, size=num_samples),
-        'xai_technique': np.random.choice(['Saliency Map', 'Counterfactual', 'LIME'], size=num_samples)
+        'timestamp': sorted(timestamps),
+        'prompt': np.random.choice(sample_prompts, size=num_samples),
+        'llm_output': np.random.choice(sample_outputs, size=num_samples),
+        'model_confidence': np.random.uniform(0.75, 1.0, size=num_samples),
+        'model_accuracy': np.random.uniform(0.8, 1.0, size=num_samples),
+        'explanation_quality': np.random.uniform(0.5, 1.0, size=num_samples),
+        'faithfulness': np.random.uniform(0.6, 1.0, size=num_samples)
     }
 
-    # Create and return the DataFrame with specified column order
-    return pd.DataFrame(data)[columns]
+    return pd.DataFrame(data)
 
 import pandas as pd
 import numpy as np
+
 
 def generate_saliency_data(llm_outputs):
-    """    Simulates token-level saliency scores for given LLM outputs.
-Arguments:
-- llm_outputs: A pandas Series of LLM output strings.
-Output:
-- Returns a DataFrame with 'output_index', 'token', and 'saliency_score'.
     """
-    saliency_records = []
+    Generates synthetic token-level saliency scores for a given series of LLM text outputs.
 
-    # Using .items() allows access to the Series index and value, and
-    # raises an AttributeError for non-Series inputs as required by tests.
-    for index, text in llm_outputs.items():
-        # .split() handles various whitespace and empty strings gracefully.
-        tokens = text.split()
-        for token in tokens:
-            # Create a record for each token with its original index and a random score.
-            saliency_records.append({
-                'output_index': index,
-                'token': token,
-                'saliency_score': np.random.rand()
-            })
+    Arguments:
+        llm_outputs (pandas.Series): A series of strings, where each string is a simulated LLM output.
+    Output:
+        pandas.DataFrame: A DataFrame with columns 'output_index', 'token', and 'saliency_score'.
+    """
 
-    # If the input was empty or contained no tokens, return a correctly
-    # structured empty DataFrame to pass the type-sensitive equality check.
-    if not saliency_records:
-        return pd.DataFrame({
-            'output_index': pd.Series([], dtype='int64'),
-            'token': pd.Series([], dtype='object'),
-            'saliency_score': pd.Series([], dtype='float64')
-        })
+    # Use a list comprehension to build a list of records for the DataFrame.
+    # This iterates through each text output, splits it into tokens,
+    # and creates a record for each token with its original index and a random score.
+    saliency_records = [
+        [index, token, np.random.rand()]
+        for index, text in llm_outputs.items()
+        for token in text.split()  # split() handles whitespace and empty strings
+    ]
 
-    # Create the final DataFrame from the list of records.
-    return pd.DataFrame(saliency_records)
+    # Create the DataFrame from the list of records.
+    # This approach correctly handles an empty input series, resulting in an
+    # empty DataFrame with the specified columns.
+    return pd.DataFrame(
+        saliency_records,
+        columns=['output_index', 'token', 'saliency_score']
+    )
 
 import pandas as pd
-import numpy as np
 
 def validate_and_summarize_data(dataframe):
-    """    Performs validations and provides summary statistics for the data.
-Arguments:
-- dataframe: The pandas DataFrame to validate and summarize.
-Output:
-- Logs column presence, data types, and missing values; outputs descriptive statistics.
     """
-    
-    # Define the core columns required for the analysis based on test cases.
+    Performs data integrity checks on a given DataFrame by verifying expected column names
+    and data types, checking for missing values in critical fields, and printing summary
+    statistics for both numerical and categorical columns.
+    """
+
+    # Expected columns and their data types
     expected_columns = {
-        "model_confidence",
-        "explanation_quality_score",
-        "faithfulness_metric",
+        'model_confidence': 'float64',
+        'explanation_quality_score': 'float64',
+        'faithfulness_metric': 'float64',
+        'true_label': 'object',
+        'xai_technique': 'object'
     }
 
-    actual_columns = set(dataframe.columns)
+    # Check for missing columns
+    for col, dtype in expected_columns.items():
+        if col not in dataframe.columns:
+            print(f"Warning: Missing expected column: {col}")
+        else:
+            # Check for incorrect data types
+            if dataframe[col].dtype != dtype:
+                print(f"Warning: Column '{col}' has incorrect dtype")
 
-    # 1. Validate that all expected columns are present.
-    # This check is validated by test_handle_unexpected_column.
-    missing_columns = expected_columns - actual_columns
-    assert not missing_columns, f"Missing required columns: {sorted(list(missing_columns))}"
+    # Check for missing values
+    if dataframe.isnull().values.any():
+        missing_in_critical = dataframe[['model_confidence', 'explanation_quality_score', 'faithfulness_metric']].isnull().any().any()
+        if missing_in_critical:
+            print("Missing values found in critical fields")
+    else:
+        print("No missing values found")
 
-    # 2. Validate that the expected columns have a numeric data type.
-    # This check is validated by test_validate_data_types.
-    for col in expected_columns:
-        assert pd.api.types.is_numeric_dtype(dataframe[col]), \
-            f"Column '{col}' must be numeric, but found {dataframe[col].dtype}."
+    if dataframe.empty:
+        print("DataFrame is empty")
+        return
 
-    # 3. Log information and summary statistics as per the function's contract.
-    # The graceful handling of missing values is tested by test_handle_missing_critical_values.
-    print("--- Data Validation & Summary ---")
-    
-    print("\nData Types:")
-    print(dataframe.dtypes)
+    # Summarize numerical data
+    print("Numerical summary:")
+    print(dataframe.describe())
 
-    print("\nMissing Values per Column:")
-    print(dataframe.isnull().sum())
-    
-    print("\nDescriptive Statistics:")
-    print(dataframe.describe(include='all'))
+    # Summarize categorical data
+    print("Categorical summary:")
+    for col in dataframe.select_dtypes(include=['object']).columns:
+        print(f"\n{col} value counts:")
+        print(dataframe[col].value_counts())
+
+from IPython.display import HTML
 
 def visualize_saliency_map(llm_output, token_scores, threshold):
+    """    Renders an LLM output string as HTML, visually highlighting tokens whose saliency scores exceed a specified threshold. This provides a visual representation of a saliency map.
+Arguments:
+llm_output (str): The text output from the LLM.
+token_scores (list): A list of tuples, where each tuple contains a token (str) and its corresponding saliency score (float).
+threshold (float): The score above which a token will be highlighted.
+Output:
+IPython.display.HTML: A displayable object that renders the highlighted text within a Jupyter environment.
     """
-    Visualizes saliency by highlighting tokens with scores above a threshold.
-    Arguments:
-    - llm_output: String of LLM output.
-    - token_scores: Corresponding saliency scores for tokens.
-    - threshold: Minimum score for highlighting.
-    Output:
-    - Returns HTML string with highlighted tokens.
-    """
-    tokens = llm_output.split()
-
-    # Check that the number of tokens matches the number of scores
-    if len(tokens) != len(token_scores):
-        raise ValueError("Number of tokens and token scores must match.")
-    
-    highlighted_tokens = []
-    for token, score in zip(tokens, token_scores):
+    highlighted_parts = []
+    for token, score in token_scores:
         if score >= threshold:
-            highlighted_tokens.append(f'<span style="background-color: yellow;">{token}</span>')
+            # Wrap the token in a span with a yellow background if its score is above or equal to the threshold
+            highlighted_parts.append(f'<span style="background-color: yellow;">{token}</span>')
         else:
-            highlighted_tokens.append(token)
+            # Otherwise, just add the token as is
+            highlighted_parts.append(token)
     
-    # Return the joined string of highlighted tokens
-    return " ".join(highlighted_tokens)
+    # Join the parts with spaces to form the final HTML string
+    html_content = " ".join(highlighted_parts)
+    
+    # Return the content as a displayable HTML object
+    return HTML(html_content)
 
 def generate_counterfactual_explanation(original_prompt, original_output, current_model_accuracy):
-                """    Simulates a counterfactual by modifying input and output.
+    """    Simulates a counterfactual explanation by creating a slightly modified version of an original prompt and a corresponding altered output, demonstrating how a minimal input change could lead to a different outcome.
 Arguments:
-- original_prompt: Original input prompt.
-- original_output: Original LLM output.
-- current_model_accuracy: Current model accuracy metric.
+original_prompt (str): The initial input text.
+original_output (str): The initial LLM output text.
+current_model_accuracy (float): The accuracy associated with the original output.
 Output:
-- Returns a dictionary with 'original_prompt', 'original_output', 'counterfactual_prompt', 'counterfactual_output'.
-                """
+dict: A dictionary containing the 'original_prompt', 'original_output', 'counterfactual_prompt', and 'counterfactual_output'.
+    """
 
-                # Validate input types to ensure robust operation.
-                if not isinstance(original_prompt, str):
-                    raise TypeError("original_prompt must be a string.")
-                if not isinstance(original_output, str):
-                    raise TypeError("original_output must be a string.")
-                if not isinstance(current_model_accuracy, (int, float)):
-                    raise TypeError("current_model_accuracy must be a number.")
+    # Validate input types to handle invalid data as per test cases.
+    if not isinstance(original_prompt, str):
+        raise TypeError("original_prompt must be a string.")
+    if not isinstance(original_output, str):
+        raise TypeError("original_output must be a string.")
+    if not isinstance(current_model_accuracy, (int, float)):
+        raise TypeError("current_model_accuracy must be a float or an integer.")
 
-                # Create counterfactuals by prepending a fixed string.
-                # This simple modification guarantees the new strings are different
-                # and handles empty inputs correctly by producing a non-empty result.
-                counterfactual_prompt = f"Modified prompt: {original_prompt}"
-                counterfactual_output = f"Alternative output: {original_output}"
+    # Create a simple, deterministic modification for the prompt to ensure it differs.
+    counterfactual_prompt = f"What if the question was: {original_prompt}"
 
-                return {
-                    'original_prompt': original_prompt,
-                    'original_output': original_output,
-                    'counterfactual_prompt': counterfactual_prompt,
-                    'counterfactual_output': counterfactual_output
-                }
+    # Create a simple, deterministic modification for the output.
+    counterfactual_output = f"An alternative answer might be: {original_output}"
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+    # Return the dictionary with original and counterfactual data.
+    return {
+        'original_prompt': original_prompt,
+        'original_output': original_output,
+        'counterfactual_prompt': counterfactual_prompt,
+        'counterfactual_output': counterfactual_output
+    }
+
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 def plot_faithfulness_trend(dataframe, x_axis, y_axis, hue_column, title):
+    """    Generates and displays a line plot to visualize the trend of a faithfulness metric over time, with separate lines for different XAI techniques. This helps in analyzing the consistency of explanations.
+Arguments:
+dataframe (pandas.DataFrame): The source data for plotting.
+x_axis (str): The name of the column to use for the x-axis (e.g., 'timestamp').
+y_axis (str): The name of the column to use for the y-axis (e.g., 'faithfulness_metric').
+hue_column (str): The name of the categorical column to differentiate the lines (e.g., 'xai_technique').
+title (str): The title of the plot.
+Output:
+None: This function displays the plot and saves it to a file.
     """
-    Generates a line plot for 'Faithfulness Metric over Time'.
 
-    Arguments:
-    - dataframe: DataFrame containing the data to plot.
-    - x_axis: Column name for X-axis (e.g., 'timestamp').
-    - y_axis: Column name for Y-axis (e.g., 'faithfulness_metric').
-    - hue_column: Column for color encoding (e.g., 'xai_technique').
-    - title: Title of the plot.
+    # A try...finally block ensures that plt.close() is called to free resources,
+    # regardless of whether plotting succeeds or fails.
+    try:
+        # Set the visual style and figure size for the plot
+        sns.set_theme(style="whitegrid")
+        plt.figure(figsize=(10, 6))
 
-    Output:
-    - Displays and saves the plot as a PNG file.
-    """
-    if not isinstance(dataframe, pd.DataFrame):
-        raise AttributeError("The 'dataframe' argument must be a pandas DataFrame.")
+        # Create the line plot using seaborn.
+        # This call handles the core plotting logic and will naturally raise
+        # the exceptions expected by the test cases for invalid inputs:
+        # - AttributeError for non-DataFrame input.
+        # - KeyError for missing columns.
+        # - TypeError for non-numeric y-axis.
+        ax = sns.lineplot(
+            data=dataframe,
+            x=x_axis,
+            y=y_axis,
+            hue=hue_column,
+            marker='o' # Add markers for better data point visibility
+        )
 
-    # Check if the required columns are present
-    required_columns = [x_axis, y_axis, hue_column]
-    for col in required_columns:
-        if col not in dataframe.columns:
-            raise KeyError(f"Column '{col}' not found in the DataFrame.")
+        # Set plot title and labels for clarity
+        ax.set_title(title, fontsize=14)
+        ax.set_xlabel(x_axis.replace('_', ' ').title())
+        ax.set_ylabel(y_axis.replace('_', ' ').title())
 
-    plt.figure(figsize=(10, 6))
-    sns.lineplot(data=dataframe, x=x_axis, y=y_axis, hue=hue_column)
-    plt.title(title)
-    plt.xlabel(x_axis)
-    plt.ylabel(y_axis)
-    plt.legend(title=hue_column)
+        # Improve layout and readability
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
 
-    plt.savefig(f"{title.replace(' ', '_')}.png")
-    plt.show()
+        # Save the plot to a file. A sanitized version of the title is used as the filename.
+        safe_filename = "".join(c for c in title if c.isalnum() or c in (' ', '_', '-')).rstrip()
+        filename = f"{safe_filename.replace(' ', '_').lower()}.png"
+        plt.savefig(filename)
 
-import matplotlib.pyplot as plt
+        # Display the plot
+        plt.show()
+
+    finally:
+        # Close the current figure to free up memory
+        plt.close()
+
 import pandas as pd
+import seaborn
+import matplotlib.pyplot
 
 def plot_quality_vs_accuracy(dataframe, x_axis, y_axis, title):
+    """    Creates and displays a scatter plot to examine the relationship and potential trade-offs between model accuracy and explanation quality score.
+Arguments:
+dataframe (pandas.DataFrame): The source data containing the metrics to plot.
+x_axis (str): The name of the column for the x-axis (e.g., 'model_accuracy').
+y_axis (str): The name of the column for the y-axis (e.g., 'explanation_quality_score').
+title (str): The title for the plot.
+Output:
+None: This function displays the plot and saves it to a file.
     """
-    Creates a scatter plot for 'Explanation Quality vs. Model Accuracy'.
-    Arguments:
-    - dataframe: DataFrame containing the data to plot.
-    - x_axis: Column name for X-axis (e.g., 'model_accuracy').
-    - y_axis: Column name for Y-axis (e.g., 'explanation_quality_score').
-    - title: Title of the plot.
-    Output:
-    - Displays and saves the plot as a PNG file.
-    """
-    # Using the pandas plotting backend, which is built on matplotlib.
-    # This approach is concise and handles errors as expected by the test cases.
-    # e.g., it will raise an AttributeError for non-DataFrame inputs.
-    ax = dataframe.plot(kind='scatter', x=x_axis, y=y_axis, title=title, figsize=(10, 6), grid=True)
+    if not isinstance(dataframe, pd.DataFrame):
+        # This explicit check helps in raising an AttributeError for non-DataFrame inputs,
+        # which aligns with test_plot_quality_vs_accuracy_invalid_dataframe_type.
+        # Otherwise, a different error might be raised by seaborn.
+        raise AttributeError("The 'dataframe' argument must be a pandas DataFrame.")
 
-    # Improve label readability
-    ax.set_xlabel(x_axis.replace('_', ' ').title())
-    ax.set_ylabel(y_axis.replace('_', ' ').title())
-    
-    # Get the figure object from the axes to save it
-    fig = ax.get_figure()
-    
-    # Generate a filesystem-safe filename from the title
-    filename = title.replace(' ', '_').lower() + ".png"
-    
-    # Save the figure
-    fig.savefig(filename)
-    
-    # Display the plot
-    plt.show()
-    
-    # Close the figure to free up memory
-    plt.close(fig)
+    try:
+        # Create the scatter plot using seaborn
+        seaborn.scatterplot(data=dataframe, x=x_axis, y=y_axis)
+        
+        # Set the title of the plot
+        matplotlib.pyplot.title(title)
+        
+        # Save the plot to a file. A default filename is used as none is specified.
+        matplotlib.pyplot.savefig('quality_vs_accuracy.png')
+        
+        # Display the plot
+        matplotlib.pyplot.show()
+
+    except KeyError as e:
+        # Re-raise KeyError if a specified column is not in the DataFrame
+        raise KeyError(f"Column not found in DataFrame: {e}")
+    except TypeError as e:
+        # Re-raise TypeError if data is not numeric, which is raised by plotting library
+        raise TypeError(f"Non-numeric data found in plot columns: {e}")
+    except Exception as e:
+        # Catch any other unexpected errors during plotting
+        # This helps in debugging but in this context, main errors are covered above.
+        # For the test cases, this generic catch is not strictly necessary but is good practice.
+        print(f"An unexpected error occurred: {e}")
+        raise
 
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
 def plot_aggregated_saliency_heatmap(saliency_dataframe, top_n_tokens, title):
-    """    Generates a heatmap for aggregated influence of saliency scores.
+    """    Generates and displays a heatmap visualizing the aggregated influence of the most important input tokens across multiple LLM outputs. This helps identify tokens that are consistently influential.
 Arguments:
-- saliency_dataframe: DataFrame with token saliency scores.
-- top_n_tokens: Number of top tokens to display.
-- title: Title of the plot.
+saliency_dataframe (pandas.DataFrame): A DataFrame containing token-level saliency scores.
+top_n_tokens (int): The number of most salient tokens to include in the heatmap.
+title (str): The title for the plot.
 Output:
-- Displays and saves the plot as a PNG file.
+None: This function displays the plot and saves it to a file.
     """
-    # Validate input types
-    if not isinstance(saliency_dataframe, pd.DataFrame):
-        raise TypeError("saliency_dataframe must be a pandas DataFrame")
-    if not isinstance(top_n_tokens, int):
-        raise TypeError("top_n_tokens must be an integer")
-    
-    # Validate input values
-    if top_n_tokens <= 0:
-        raise ValueError("top_n_tokens must be positive")
+    # Validate inputs
     if saliency_dataframe.empty:
-        raise ValueError("saliency_dataframe cannot be empty")
-
-    # The following operation will raise a KeyError if required columns are missing,
-    # which is handled by the test cases.
+        raise ValueError("dataframe cannot be empty")
     
-    # Aggregate saliency scores by token
-    aggregated_scores = saliency_dataframe.groupby('token')['saliency_score'].mean().sort_values(ascending=False)
+    if not isinstance(top_n_tokens, int) or top_n_tokens <= 0:
+        raise ValueError("top_n_tokens must be a positive integer")
 
-    # Get the top N tokens. .head() handles cases where top_n_tokens > len(aggregated_scores)
-    top_tokens = aggregated_scores.head(top_n_tokens)
+    try:
+        # Aggregate saliency scores by token (calculating the mean)
+        aggregated_saliency = saliency_dataframe.groupby('token')['saliency_score'].mean()
+    except KeyError:
+        # This will be raised if 'token' or 'saliency_score' columns are missing
+        raise KeyError("Input DataFrame must contain 'token' and 'saliency_score' columns.")
 
-    # Reshape the data for the heatmap
-    heatmap_data = top_tokens.to_frame(name='Mean Saliency Score')
+    # Sort by saliency score to find the most influential tokens
+    sorted_saliency = aggregated_saliency.sort_values(ascending=False)
 
-    # Create the plot
-    plt.figure(figsize=(8, max(6, len(top_tokens) * 0.5))) # Adjust height based on number of tokens
+    # Select the top N tokens. .head() gracefully handles cases where
+    # top_n_tokens is larger than the number of unique tokens.
+    top_tokens = sorted_saliency.head(top_n_tokens)
+
+    # Prepare data for plotting (seaborn heatmap requires a 2D array-like structure)
+    heatmap_data = pd.DataFrame(top_tokens)
+    heatmap_data.columns = ['Aggregated Saliency']
+
+    # Generate the heatmap
+    plt.figure(figsize=(8, max(4, len(top_tokens) * 0.5)))
     sns.heatmap(
-        heatmap_data,
-        annot=True,
-        fmt=".3f",
-        cmap='viridis',
-        cbar=True,
-        cbar_kws={'label': 'Mean Saliency Score'}
+        heatmap_data, 
+        annot=True, 
+        cmap='viridis', 
+        fmt='.3f',
+        cbar_kws={'label': 'Aggregated Saliency Score'}
     )
-    
-    plt.title(title, fontsize=16)
-    plt.ylabel('Token', fontsize=12)
-    plt.xticks([]) # Hide x-axis ticks for a cleaner look
-    plt.yticks(rotation=0) # Ensure token labels are readable
+
+    plt.title(title, fontsize=14)
+    plt.ylabel('Token')
+    plt.xlabel('Influence')
+    plt.yticks(rotation=0) # Ensure token names are readable
     plt.tight_layout()
 
-    # Save the plot to a file and display it
-    plt.savefig('aggregated_saliency_heatmap.png')
+    # Save the figure and display the plot
+    filename = f"{title.replace(' ', '_').lower()}_heatmap.png"
+    plt.savefig(filename)
     plt.show()
-    # Close the plot to free up memory
-    plt.close()
 
 def filter_by_verbosity(dataframe, verbosity_threshold):
-    """    Filters data based on explanation quality score.
+                """    Filters a DataFrame based on a proxy for explanation verbosity. It returns rows where the 'explanation_quality_score' is greater than or equal to a given threshold.
 Arguments:
-- dataframe: The DataFrame to filter.
-- verbosity_threshold: Minimum explanation quality score.
+dataframe (pandas.DataFrame): The input DataFrame to filter.
+verbosity_threshold (float): The minimum explanation quality score required to be included in the output.
 Output:
-- Returns a filtered DataFrame.
-    """
-    # Filter the DataFrame where 'explanation_quality_score' is greater than or equal to the threshold.
-    # Using attribute access (dataframe.explanation_quality_score) ensures an AttributeError is raised
-    # for None inputs, matching the test case.
-    return dataframe[dataframe.explanation_quality_score >= verbosity_threshold]
+pandas.DataFrame: A new DataFrame containing only the rows that meet the verbosity threshold.
+                """
+                # Create a boolean mask to filter rows based on the threshold.
+                mask = dataframe['explanation_quality_score'] >= verbosity_threshold
+                
+                # Apply the mask to return the filtered DataFrame.
+                return dataframe[mask]
 
 import pandas as pd
 
 def filter_by_confidence(dataframe, confidence_threshold):
-    """    Filters data based on model confidence.
-Arguments:
-- dataframe: The DataFrame to filter.
-- confidence_threshold: Minimum model confidence required.
-Output:
-- Returns a filtered DataFrame.
     """
-    # This boolean indexing will raise a KeyError if 'model_confidence' is not a column,
-    # which satisfies the test case for a missing column.
+    Filters a DataFrame to include only rows where 'model_confidence' meets a specified minimum threshold.
+
+    Arguments:
+        dataframe (pandas.DataFrame): The input DataFrame to filter. It must contain a 'model_confidence' column.
+        confidence_threshold (float): The minimum model confidence score required for a row to be included.
+
+    Output:
+        pandas.DataFrame: A new DataFrame containing only the rows that meet the confidence threshold.
+    """
+    # This will naturally raise a KeyError if the 'model_confidence' column is missing,
+    # satisfying the test case for that scenario.
     return dataframe[dataframe['model_confidence'] >= confidence_threshold]
