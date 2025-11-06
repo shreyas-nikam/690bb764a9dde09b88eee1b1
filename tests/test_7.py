@@ -1,153 +1,89 @@
 import pytest
 import pandas as pd
 import numpy as np
-from unittest.mock import MagicMock
+from unittest.mock import patch
 
-# Block for definition_fd1186e78b8644f08efcc72dd6a24b47 - DO NOT REPLACE or REMOVE
-from definition_fd1186e78b8644f08efcc72dd6a24b47 import plot_aggregated_saliency_heatmap
-# END Block for definition_fd1186e78b8644f08efcc72dd6a24b47
+# Keep this block as it is.
+# definition_f1b021ca601845a7aa7a2e7a991a0c4b
+from definition_f1b021ca601845a7aa7a2e7a991a0c4b import plot_aggregated_saliency_heatmap
+# </your_module>
+
 
 @pytest.fixture
-def mock_matplotlib_seaborn(mocker):
-    """Fixture to mock matplotlib and seaborn plotting functions."""
-    mocker.patch('matplotlib.pyplot.show')
-    mocker.patch('matplotlib.pyplot.savefig')
-    mocker.patch('matplotlib.pyplot.figure')
-    mocker.patch('matplotlib.pyplot.title')
-    mocker.patch('matplotlib.pyplot.xlabel')
-    mocker.patch('matplotlib.pyplot.ylabel')
-    mocker.patch('matplotlib.pyplot.xticks')
-    mocker.patch('matplotlib.pyplot.tick_params')
-    mocker.patch('matplotlib.pyplot.tight_layout')
-    mocker.patch('seaborn.set_theme')
-    mocker.patch('seaborn.heatmap')
-
-def create_saliency_df(num_rows=10, num_outputs=3):
-    """Helper to create a sample saliency DataFrame."""
+def sample_saliency_df():
+    """Provides a sample saliency dataframe for testing."""
     data = {
-        'output_index': np.random.randint(0, num_outputs, num_rows),
-        'token': [f'token_{i % 5}' for i in range(num_rows)], # 5 unique tokens
-        'saliency_score': np.random.rand(num_rows)
+        'token': ['hello', 'world', 'this', 'is', 'a', 'test', 'hello', 'world', 'is', 'a'],
+        'saliency_score': [0.9, 0.8, 0.3, 0.7, 0.6, 0.2, 0.95, 0.85, 0.75, 0.65]
     }
     return pd.DataFrame(data)
 
-# Test Cases (at most 5)
 
-def test_plot_aggregated_saliency_heatmap_happy_path(mock_matplotlib_seaborn):
+@patch('matplotlib.pyplot.show')
+@patch('matplotlib.pyplot.savefig')
+@patch('seaborn.heatmap')
+def test_plot_aggregated_saliency_heatmap_happy_path(mock_heatmap, mock_savefig, mock_show, sample_saliency_df):
     """
-    Test case 1: Basic functionality with valid data and positive top_n_tokens.
-    Verifies that plotting functions are called as expected and heatmap receives valid data.
+    Tests the function with valid inputs to ensure plotting functions are called correctly.
     """
-    saliency_df = create_saliency_df(num_rows=20, num_outputs=5)
     top_n = 3
-    title = "Sample Saliency Heatmap"
+    title = "Test Heatmap"
+    plot_aggregated_saliency_heatmap(sample_saliency_df, top_n_tokens=top_n, title=title)
 
-    plot_aggregated_saliency_heatmap(saliency_df, top_n, title)
-
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
-    plt.figure.assert_called_once()
-    sns.set_theme.assert_called_once_with(style="whitegrid", palette="viridis")
-    sns.heatmap.assert_called_once()
+    mock_heatmap.assert_called_once()
+    mock_savefig.assert_called_once_with('aggregated_saliency_heatmap.png')
+    mock_show.assert_called_once()
     
-    actual_data_passed = sns.heatmap.call_args[0][0]
-    assert isinstance(actual_data_passed, pd.DataFrame)
-    assert 'Average Saliency' in actual_data_passed.columns
-    assert len(actual_data_passed) <= top_n # Number of tokens plotted should be <= top_n
+    # Check that the data passed to heatmap has the correct shape (top_n tokens)
+    call_args, _ = mock_heatmap.call_args
+    heatmap_data = call_args[0]
+    assert heatmap_data.shape[0] == top_n
+
+
+def test_plot_aggregated_saliency_heatmap_empty_dataframe():
+    """
+    Tests the function with an empty DataFrame, expecting a ValueError.
+    """
+    empty_df = pd.DataFrame({'token': [], 'saliency_score': []})
+    with pytest.raises(ValueError, match="saliency_dataframe cannot be empty"):
+        plot_aggregated_saliency_heatmap(empty_df, top_n_tokens=5, title="Empty")
+
+
+def test_plot_aggregated_saliency_heatmap_missing_columns():
+    """
+    Tests the function with a DataFrame missing required columns, expecting a KeyError.
+    """
+    invalid_df = pd.DataFrame({'word': ['a', 'b'], 'score': [0.1, 0.2]})
+    with pytest.raises(KeyError, match="'token'"):
+        plot_aggregated_saliency_heatmap(invalid_df, top_n_tokens=1, title="Invalid DF")
+
+
+@patch('matplotlib.pyplot.show')
+@patch('matplotlib.pyplot.savefig')
+@patch('seaborn.heatmap')
+def test_plot_aggregated_saliency_heatmap_top_n_exceeds_unique(mock_heatmap, mock_savefig, mock_show, sample_saliency_df):
+    """
+    Tests that the function handles cases where top_n_tokens is larger than the number of unique tokens.
+    It should plot all unique tokens available.
+    """
+    unique_tokens_count = sample_saliency_df['token'].nunique()
+    plot_aggregated_saliency_heatmap(sample_saliency_df, top_n_tokens=unique_tokens_count + 5, title="Top N Exceeds")
     
-    plt.title.assert_called_once_with(title, fontsize=14)
-    plt.savefig.assert_called_once_with("aggregated_saliency_heatmap.png")
-    plt.show.assert_called_once()
+    mock_heatmap.assert_called_once()
+    call_args, _ = mock_heatmap.call_args
+    heatmap_data = call_args[0]
+    assert heatmap_data.shape[0] == unique_tokens_count
 
 
-def test_plot_aggregated_saliency_heatmap_empty_dataframe(mock_matplotlib_seaborn):
+def test_plot_aggregated_saliency_heatmap_invalid_input_types(sample_saliency_df):
     """
-    Test case 2: saliency_dataframe is empty.
-    Verifies that it handles empty data gracefully without errors, and no heatmap is drawn.
+    Tests the function with invalid data types for its arguments, expecting TypeErrors.
     """
-    saliency_df = pd.DataFrame(columns=['output_index', 'token', 'saliency_score'])
-    top_n = 5
-    title = "Empty Saliency Heatmap"
+    with pytest.raises(TypeError, match="saliency_dataframe must be a pandas DataFrame"):
+        plot_aggregated_saliency_heatmap([1, 2, 3], top_n_tokens=5, title="Title")
 
-    plot_aggregated_saliency_heatmap(saliency_df, top_n, title)
+    with pytest.raises(TypeError, match="top_n_tokens must be an integer"):
+        plot_aggregated_saliency_heatmap(sample_saliency_df, top_n_tokens="five", title="Title")
 
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
-    plt.figure.assert_called_once()
-    sns.set_theme.assert_called_once()
-    sns.heatmap.assert_not_called() 
-
-    plt.title.assert_called_once_with(title, fontsize=14)
-    plt.savefig.assert_called_once_with("aggregated_saliency_heatmap.png")
-    plt.show.assert_called_once()
-
-
-def test_plot_aggregated_saliency_heatmap_top_n_tokens_zero(mock_matplotlib_seaborn):
-    """
-    Test case 3: top_n_tokens is 0.
-    Verifies that it runs without error and no heatmap is drawn.
-    """
-    saliency_df = create_saliency_df(num_rows=20, num_outputs=5)
-    top_n = 0
-    title = "Zero Top Tokens Heatmap"
-
-    plot_aggregated_saliency_heatmap(saliency_df, top_n, title)
-
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-
-    plt.figure.assert_called_once()
-    sns.set_theme.assert_called_once()
-    sns.heatmap.assert_not_called() 
-
-    plt.title.assert_called_once_with(title, fontsize=14)
-    plt.savefig.assert_called_once_with("aggregated_saliency_heatmap.png")
-    plt.show.assert_called_once()
-
-
-@pytest.mark.parametrize("missing_column", [
-    'token',
-    'saliency_score',
-    'output_index'
-])
-def test_plot_aggregated_saliency_heatmap_missing_required_column(mock_matplotlib_seaborn, missing_column):
-    """
-    Test case 4: saliency_dataframe is missing a required column.
-    Expects a KeyError.
-    """
-    saliency_df = create_saliency_df(num_rows=10)
-    saliency_df = saliency_df.drop(columns=[missing_column])
-    top_n = 3
-    title = "Missing Column Heatmap"
-
-    with pytest.raises(KeyError) as excinfo:
-        plot_aggregated_saliency_heatmap(saliency_df, top_n, title)
-    
-    assert f"saliency_dataframe must contain columns: ['token', 'saliency_score', 'output_index']" in str(excinfo.value)
-
-
-@pytest.mark.parametrize("saliency_dataframe_arg, top_n_tokens_arg, title_arg, expected_exception, error_message_part", [
-    (123, 5, "Title", TypeError, "saliency_dataframe must be a pandas DataFrame."), 
-    (create_saliency_df(), "not_an_int", "Title", TypeError, "top_n_tokens must be an integer."), 
-    (create_saliency_df(), 3.5, "Title", TypeError, "top_n_tokens must be an integer."), 
-    (create_saliency_df(), -1, "Title", ValueError, "top_n_tokens cannot be negative."), 
-    (create_saliency_df(), 5, 123, TypeError, "title must be a string.") 
-])
-def test_plot_aggregated_saliency_heatmap_invalid_argument_types_or_values(
-    mock_matplotlib_seaborn, saliency_dataframe_arg, top_n_tokens_arg, title_arg, expected_exception, error_message_part):
-    """
-    Test case 5: Invalid types or values for saliency_dataframe, top_n_tokens, or title.
-    Expects TypeError or ValueError.
-    """
-    # Use the pre-created DataFrame or the invalid argument directly
-    if not isinstance(saliency_dataframe_arg, pd.DataFrame): 
-        saliency_df = saliency_dataframe_arg
-    else:
-        saliency_df = saliency_dataframe_arg
-
-    with pytest.raises(expected_exception) as excinfo:
-        plot_aggregated_saliency_heatmap(saliency_df, top_n_tokens_arg, title_arg)
-    
-    assert error_message_part in str(excinfo.value)
+    with pytest.raises(ValueError, match="top_n_tokens must be positive"):
+        plot_aggregated_saliency_heatmap(sample_saliency_df, top_n_tokens=0, title="Title")
