@@ -1,61 +1,37 @@
 import pytest
 import pandas as pd
-from definition_d9ea417bdb524753890c84daf4894c34 import filter_by_confidence
+from pandas.testing import assert_frame_equal
+from definition_48dbf0161c8d4297b2b45a48735d772d import filter_by_confidence
 
-@pytest.mark.parametrize("dataframe_input, confidence_threshold, expected_output_or_exception", [
-    # Test Case 1: Basic functionality - filters some rows
-    (
-        pd.DataFrame({
-            'id': [1, 2, 3, 4, 5],
-            'model_confidence': [0.6, 0.9, 0.4, 0.75, 0.8]
-        }),
-        0.7,
-        pd.DataFrame({
-            'id': [2, 4, 5],
-            'model_confidence': [0.9, 0.75, 0.8]
-        }, index=[1, 3, 4])
-    ),
-    # Test Case 2: Edge Case - Empty DataFrame
-    (
-        pd.DataFrame(columns=['id', 'model_confidence']),
-        0.5,
-        pd.DataFrame(columns=['id', 'model_confidence'])
-    ),
-    # Test Case 3: Edge Case - All rows meet or exceed the threshold
-    (
-        pd.DataFrame({
-            'id': [1, 2, 3],
-            'model_confidence': [0.8, 0.9, 0.7]
-        }),
-        0.7,
-        pd.DataFrame({
-            'id': [1, 2, 3],
-            'model_confidence': [0.8, 0.9, 0.7]
-        })
-    ),
-    # Test Case 4: Error Case - DataFrame missing 'model_confidence' column
-    (
-        pd.DataFrame({
-            'id': [1, 2],
-            'another_col': [10, 20]
-        }),
-        0.5,
-        KeyError  # Expected exception when accessing missing column
-    ),
-    # Test Case 5: Error Case - Invalid type for confidence_threshold
-    (
-        pd.DataFrame({
-            'id': [1, 2],
-            'model_confidence': [0.6, 0.9]
-        }),
-        "high",  # String instead of numeric
-        TypeError # Expected exception for comparison with non-numeric
-    )
+# Test data setup
+DF_BASE = pd.DataFrame({
+    "model_confidence": [0.5, 0.75, 0.9, 1.0],
+    "data": ["low", "medium", "high", "perfect"]
+})
+DF_EMPTY = pd.DataFrame({"model_confidence": [], "data": []}).astype(DF_BASE.dtypes)
+
+@pytest.mark.parametrize("dataframe, confidence_threshold, expected", [
+    # Test case 1: Standard functionality - filters rows below the threshold
+    (DF_BASE, 0.8, pd.DataFrame({"model_confidence": [0.9, 1.0], "data": ["high", "perfect"]}, index=[2, 3])),
+    
+    # Test case 2: Edge case - threshold is 0.0, should return the original DataFrame
+    (DF_BASE, 0.0, DF_BASE),
+    
+    # Test case 3: Edge case - threshold is higher than any value, should return an empty DataFrame
+    (DF_BASE, 1.1, DF_EMPTY),
+
+    # Test case 4: Edge case - input DataFrame is empty, should return an empty DataFrame
+    (DF_EMPTY, 0.5, DF_EMPTY),
+    
+    # Test case 5: Error case - input DataFrame is missing the 'model_confidence' column
+    (pd.DataFrame({"other_col": [1, 2]}), 0.5, KeyError),
 ])
-def test_filter_by_confidence(dataframe_input, confidence_threshold, expected_output_or_exception):
-    if isinstance(expected_output_or_exception, type) and issubclass(expected_output_or_exception, Exception):
-        with pytest.raises(expected_output_or_exception):
-            filter_by_confidence(dataframe_input, confidence_threshold)
-    else:
-        result_df = filter_by_confidence(dataframe_input, confidence_threshold)
-        pd.testing.assert_frame_equal(result_df, expected_output_or_exception, check_dtype=True, check_index_type=True, check_exact=False)
+def test_filter_by_confidence(dataframe, confidence_threshold, expected):
+    """
+    Tests the filter_by_confidence function with various inputs, including edge cases and expected errors.
+    """
+    try:
+        result_df = filter_by_confidence(dataframe, confidence_threshold)
+        assert_frame_equal(result_df, expected)
+    except Exception as e:
+        assert isinstance(e, expected)
