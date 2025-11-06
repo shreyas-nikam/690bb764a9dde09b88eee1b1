@@ -1,33 +1,62 @@
 import pytest
-from definition_a6713752450240a5a44e49200dc313ff import filter_by_verbosity
 import pandas as pd
+from pandas.testing import assert_frame_equal
+from definition_68dd4f6a129c4b608524956f934bbade import filter_by_verbosity
 
-@pytest.fixture
-def sample_dataframe():
-    return pd.DataFrame({
-        'explanation_quality_score': [0.2, 0.5, 0.7, 0.9, 0.4],
-        'other_column': [1, 2, 3, 4, 5]
-    })
+# Base data for creating the test DataFrame for most cases
+base_data = {
+    'prompt': ['p1', 'p2', 'p3', 'p4'],
+    'explanation_quality_score': [0.2, 0.5, 0.8, 0.9],
+    'other_col': [1, 2, 3, 4]
+}
 
-@pytest.mark.parametrize("verbosity_threshold, expected_count", [
-    (0.0, 5),
-    (0.5, 3),
-    (0.7, 2),
-    (1.0, 0),
+@pytest.mark.parametrize("input_data, verbosity_threshold, expected_data", [
+    # Test case 1: Basic filtering where some rows are dropped, ensuring other columns are preserved.
+    (
+        base_data,
+        0.7,
+        {'prompt': ['p3', 'p4'], 'explanation_quality_score': [0.8, 0.9], 'other_col': [3, 4]}
+    ),
+    # Test case 2: Edge case - threshold is lower than all scores, returns the original DataFrame.
+    (
+        base_data,
+        0.0,
+        base_data
+    ),
+    # Test case 3: Edge case - threshold is higher than all scores, returns an empty DataFrame.
+    (
+        base_data,
+        1.0,
+        {'prompt': [], 'explanation_quality_score': [], 'other_col': []}
+    ),
+    # Test case 4: Edge case - threshold exactly matches a score, testing for inclusive filtering (>=).
+    (
+        base_data,
+        0.8,
+        {'prompt': ['p3', 'p4'], 'explanation_quality_score': [0.8, 0.9], 'other_col': [3, 4]}
+    ),
+    # Test case 5: Edge case - input DataFrame is empty.
+    (
+        {'prompt': [], 'explanation_quality_score': [], 'other_col': []},
+        0.5,
+        {'prompt': [], 'explanation_quality_score': [], 'other_col': []}
+    ),
 ])
+def test_filter_by_verbosity(input_data, verbosity_threshold, expected_data):
+    """
+    Tests filter_by_verbosity with various inputs including normal cases,
+    edge cases for the threshold, and an empty DataFrame.
+    """
+    input_df = pd.DataFrame(input_data)
+    expected_df = pd.DataFrame(expected_data)
 
-def test_filter_by_verbosity(sample_dataframe, verbosity_threshold, expected_count):
-    filtered_df = filter_by_verbosity(sample_dataframe, verbosity_threshold)
-    assert len(filtered_df) == expected_count
+    result_df = filter_by_verbosity(input_df, verbosity_threshold)
 
-def test_filter_no_rows_meeting_threshold(sample_dataframe):
-    filtered_df = filter_by_verbosity(sample_dataframe, 1.0)
-    assert filtered_df.empty
-
-def test_filter_all_rows_meeting_threshold(sample_dataframe):
-    filtered_df = filter_by_verbosity(sample_dataframe, 0.0)
-    assert len(filtered_df) == len(sample_dataframe)
-
-def test_filter_invalid_dataframe():
-    with pytest.raises(AttributeError):
-        filter_by_verbosity(None, 0.5)
+    # Use pandas testing utility to compare DataFrames.
+    # We reset index to ensure alignment after filtering and set check_dtype=False
+    # because constructing empty dataframes from dicts can lead to object dtypes.
+    assert_frame_equal(
+        result_df.reset_index(drop=True),
+        expected_df.reset_index(drop=True),
+        check_dtype=False
+    )
