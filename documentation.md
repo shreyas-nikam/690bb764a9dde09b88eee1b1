@@ -3,586 +3,1024 @@ summary: Agentic AI for Safety Monitoring Documentation
 feedback link: https://docs.google.com/forms/d/e/1FAIpQLSfWkOK-in_bMMoHSZfcIvAeO58PAH9wrDqcxnJABHaxiDqhSA/viewform?usp=sf_link
 environments: Web
 status: Published
-# QuLab: Explaining Agentic AI for Safety Monitoring
+# Explainable AI (XAI) for Large Language Models (LLMs)
 
-## 1. Introduction to QuLab and Agentic AI Safety Monitoring
-Duration: 0:08:00
+## 1. Introduction, Setup, and Application Overview
+Duration: 0:10:00
 
-Welcome to the **QuLab: Agentic AI for Safety Monitoring: An Explainable AI Lab** codelab! In this lab, we will embark on a comprehensive journey to understand and interact with a Streamlit application designed to explore the critical role of Explainable AI (XAI) in monitoring Large Language Models (LLMs) within agentic systems, with a particular focus on safety.
+Welcome to this codelab on Explainable AI (XAI) for Large Language Models (LLMs)! In today's rapidly evolving AI landscape, LLMs are becoming ubiquitous, powering everything from chatbots to content generation. However, their complex "black box" nature often makes it difficult to understand *why* they make certain decisions or produce specific outputs. This lack of transparency can be a significant barrier to trust, adoption, and responsible deployment, especially in critical applications.
 
-As AI agents gain more autonomy and become integrated into critical systems, ensuring their decisions are transparent, justifiable, and inherently safe becomes paramount. This application provides a hands-on, end-to-end walkthrough using synthetic data to demonstrate how core XAI concepts and techniques can be applied in a practical setting.
+This Streamlit application, "XAI for LLMs," provides an interactive and practical guide to understanding core XAI concepts and techniques. By leveraging synthetic data, we simulate real-world LLM interactions and their associated XAI metrics, allowing you to explore these complex ideas in a controlled and accessible environment.
 
-<aside class="positive">
-<b>Why is this important?</b> Agentic AI systems can make complex decisions with limited human oversight. XAI provides the essential tools to "look inside" these black-box LLMs, offering insights into their reasoning and potential vulnerabilities. This is crucial for:
-<ul>
-    <li><b>Enhanced Trust:</b> Building confidence in AI systems among stakeholders.</li>
-    <li><b>Improved Governance:</b> Meeting regulatory and ethical requirements for AI explainability.</li>
-    <li><b>Faster Incident Response:</b> Rapidly identifying and mitigating unsafe or undesirable behaviors.</li>
-    <li><b>Bias Detection & Mitigation:</b> Proactively addressing potential biases in AI decision-making.</li>
-    <li><b>Robustness against Attacks:</b> Understanding how models might be vulnerable to adversarial inputs.</li>
-</ul>
-</aside>
+**Learning Goals:**
+Upon completing this codelab, you will be able to:
+*   **Understand the Importance:** Grasp why XAI is crucial for building trustworthy and reliable LLM applications.
+*   **Distinguish Key Concepts:** Clearly differentiate between interpretability and transparency in the context of AI models.
+*   **Explore XAI Techniques:** Review and conceptually apply prominent XAI techniques such as Saliency Maps and Counterfactual Explanations.
+*   **Analyze Trade-offs:** Understand the inherent trade-offs between model performance (e.g., accuracy, confidence) and the explainability of its decisions.
+*   **Interact with XAI Visualizations:** Use interactive tools to explore data filtering, trend analysis, and token influence.
 
-**What you will learn and do in this codelab:**
+### Application Architecture Overview
 
-*   **Core XAI Concepts**: Distinguish between interpretability and transparency, and understand their importance for risk management, trust, and AI governance.
-*   **Synthetic Data Generation**: Learn how to create realistic datasets of LLM interactions and associated XAI signals at scale to simulate real-world scenarios.
-*   **XAI Technique Simulation**: Interact with demonstrations of cornerstone techniques like saliency maps (to understand token importance) and counterfactual explanations (to explore "what-if" scenarios).
-*   **Trend & Trade-off Analysis**: Visualize how explanation quality and faithfulness evolve over time and their relationship with model accuracy.
-*   **Practical Filtering**: Apply filters based on XAI metrics and model confidence to focus human review efforts on high-value or high-risk cases.
-*   **AI Security & Defenses**: Understand how XAI supports identifying and mitigating AI-security threats in agentic systems by providing insights into model behavior.
+The application is structured as a multi-page Streamlit application, though for simplicity, only one main page (`xai_for_llms.py`) is primarily focused on.
 
-This lab aims to equip you with a foundational understanding and practical examples to integrate XAI into your AI safety monitoring strategies. All code executes locally and uses only open-source packages, making it a highly accessible and reproducible learning experience.
+```mermaid
+graph TD
+    A[app.py] --> B{Streamlit App Layout & Navigation}
+    B -- Select "XAI for LLMs" --> C[application_pages/xai_for_llms.py]
 
-## 2. Setting Up the Environment and Understanding the Application Structure
-Duration: 0:05:00
+    C --> D[Data Generation: generate_llm_data(), generate_saliency_data()]
+    C --> E[Data Processing: validate_and_summarize_data(), filter_by_verbosity(), filter_by_confidence()]
+    C --> F[XAI Simulations: visualize_saliency_map(), generate_counterfactual_explanation()]
+    C --> G[Plotting: plot_faithfulness_trend(), plot_quality_vs_accuracy(), plot_aggregated_saliency_heatmap()]
 
-Before diving into the application's functionalities, let's set up your environment and understand the overall structure of the Streamlit application.
+    D -- Provides Data (df_llm_data, df_saliency) --> C
+    E -- Processed Data/Insights --> C
+    F -- XAI Explanations --> C
+    G -- Visualizations --> C
 
-### Prerequisites
-
-Ensure you have Python installed (Python 3.8+ recommended).
-
-### 2.1 Clone the Repository (Conceptual)
-
-Assuming you have access to the code, you would typically clone the repository. For this codelab, we are provided with the `app.py` and `application_pages/` directory.
-
-### 2.2 Install Dependencies
-
-The application relies on several Python libraries. You can install them using pip:
-
-```bash
-pip install streamlit pandas numpy plotly
+    C --> H[Streamlit UI Elements: Sliders, Buttons, Dataframes, Plots]
 ```
+This diagram illustrates `app.py` as the entry point, which then directs to `xai_for_llms.py`. The `xai_for_llms.py` script orchestrates data generation, processing, XAI technique simulations, and visualization, all rendered through Streamlit UI components.
 
-### 2.3 Running the Streamlit Application
+### Setup and Running the Application
 
-Navigate to the directory containing `app.py` and run the application using the Streamlit command:
+To get started, you'll need Python installed on your system. We recommend using a virtual environment.
 
-```bash
-streamlit run app.py
-```
+1.  **Create a Project Directory:**
+    ```bash
+    mkdir xai_llm_codelab
+    cd xai_llm_codelab
+    ```
 
-This command will open the application in your default web browser.
+2.  **Create a Virtual Environment (Optional but Recommended):**
+    ```bash
+    python -m venv venv
+    # On Windows:
+    # .\venv\Scripts\activate
+    # On macOS/Linux:
+    source venv/bin/activate
+    ```
 
-### 2.4 Application Structure Overview
+3.  **Install Dependencies:**
+    ```bash
+    pip install streamlit pandas numpy matplotlib seaborn faker
+    ```
 
-The application is structured into a main `app.py` file and a `application_pages` directory containing individual page logic.
-
-*   **`app.py`**:
-    *   Initializes the Streamlit page configuration (`st.set_page_config`).
-    *   Sets up the main title and introductory markdown.
-    *   Initializes `st.session_state` variables (`df_llm_data`, `df_saliency`) to persist data across user interactions and page navigations.
-    *   Implements **Global Filtering Controls** in the sidebar, which apply to data displayed across all pages.
-    *   Manages **Navigation** between different pages using a `st.sidebar.selectbox`.
-    *   Imports and runs the respective page functions based on user selection.
-
+4.  **Create Application Files:**
+    Create a file named `app.py` in your `xai_llm_codelab` directory:
     ```python
-    # app.py (excerpt)
+    # app.py
     import streamlit as st
-    import pandas as pd
-    import numpy as np
-    import random
-    import warnings
-    from datetime import datetime, timedelta
-
-    # Suppress warnings
-    warnings.filterwarnings('ignore')
-
-    # Reproducibility (will be set once, perhaps in session_state or app initialization)
-    SEED = 42
-    random.seed(SEED)
-    np.random.seed(SEED)
-
     st.set_page_config(page_title="QuLab", layout="wide")
     st.sidebar.image("https://www.quantuniversity.com/assets/img/logo5.jpg")
     st.sidebar.divider()
     st.title("QuLab")
     st.divider()
-    # ... introductory markdown ...
+    # Your code starts here
+    st.markdown("""
+    This Streamlit application, 'XAI for LLMs', provides an interactive exploration of Explainable AI (XAI) concepts and techniques applied to Large Language Models (LLMs), leveraging synthetic data to simulate real-world scenarios. Users can generate synthetic LLM interaction data, explore core XAI concepts like interpretability vs. transparency, simulate saliency maps and counterfactual explanations, and analyze key visualizations related to explanation quality, faithfulness, and token influence. The application aims to enhance understanding of how to make LLM decisions more transparent and interpretable.
+    """)
 
-    # Initialize session state for data if not already present
+    page = st.sidebar.selectbox(label="Navigation", options=["XAI for LLMs"])
+    if page == "XAI for LLMs":
+        from application_pages.xai_for_llms import main
+        main()
+    # Your code ends here
+    ```
+    Next, create a directory named `application_pages` inside `xai_llm_codelab`, and inside `application_pages`, create `xai_for_llms.py`:
+    ```python
+    # application_pages/xai_for_llms.py
+    import streamlit as st
+    import pandas as pd
+    import numpy as np
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    from faker import Faker
+    from datetime import datetime, timedelta
+
+    #  Configuration for Streamlit App 
+    st.set_page_config(layout="wide", page_title="XAI for LLMs")
+    sns.set_theme(style="whitegrid", palette='viridis') # Apply color-blind friendly palette
+    plt.rcParams.update({'font.size': 12}) # Set font size >= 12 pt
+
+    #  Session State Initialization 
     if 'df_llm_data' not in st.session_state:
         st.session_state['df_llm_data'] = pd.DataFrame()
     if 'df_saliency' not in st.session_state:
         st.session_state['df_saliency'] = pd.DataFrame()
 
-    # Global Filtering Controls in Sidebar
-    st.sidebar.markdown("## Global Filters")
-    if not st.session_state['df_llm_data'].empty:
-        min_quality = st.sidebar.slider("Min Explanation Quality Score", 0.0, 1.0, 0.0, 0.01, help="Filter to show only records with explanation quality scores above this value.")
-        min_confidence = st.sidebar.slider("Min Model Confidence", 0.0, 1.0, 0.0, 0.01, help="Filter to show only records with model confidence scores above this value.")
+    @st.cache_data # Cache data generation to improve performance
+    def generate_llm_data(num_samples):
+        """Creates a synthetic pandas DataFrame simulating LLM interactions and associated XAI metrics."""
+        if not isinstance(num_samples, int):
+            raise TypeError("num_samples must be an integer.")
+        if num_samples < 0:
+            raise ValueError("num_samples cannot be negative.")
 
-        xai_techniques = st.session_state['df_llm_data']['xai_technique'].unique().tolist()
-        selected_techniques = st.sidebar.multiselect("Filter by XAI Technique", xai_techniques, default=xai_techniques, help="Select which XAI techniques to include in the analysis and visualizations.")
+        fake = Faker()
+        
+        if num_samples == 0:
+            return pd.DataFrame(columns=[
+            'timestamp', 'prompt', 'llm_output', 'true_label', 'model_confidence',
+            'model_accuracy', 'explanation_quality_score', 'faithfulness_metric', 'xai_technique'
+        ])
 
-        # Apply global filters
-        filtered_df = st.session_state['df_llm_data'][
-            (st.session_state['df_llm_data']['explanation_quality_score'] >= min_quality) &
-            (st.session_state['df_llm_data']['model_confidence'] >= min_confidence) &
-            (st.session_state['df_llm_data']['xai_technique'].isin(selected_techniques))
-        ].copy()
-    else:
-        filtered_df = pd.DataFrame() # Empty if no data yet
+        start_date = datetime.now()
+        timestamps = [fake.date_time_this_year() for _ in range(num_samples)]
 
-    # Navigation
-    page = st.sidebar.selectbox(label="Navigation", options=["Page 1: Introduction & Data Setup", "Page 2: XAI Concepts & Saliency Map", "Page 3: Counterfactuals & Trend Analysis"])
+        data = {
+            'timestamp': sorted(timestamps),
+            'prompt': [fake.sentence() for _ in range(num_samples)],
+            'llm_output': [fake.text(max_nb_chars=100) for _ in range(num_samples)],
+            'true_label': np.random.choice(['Positive', 'Negative', 'Neutral'], size=num_samples),
+            'model_confidence': np.random.uniform(0.5, 1.0, size=num_samples),
+            'model_accuracy': np.random.randint(0, 2, size=num_samples),
+            'explanation_quality_score': np.random.uniform(0.5, 1.0, size=num_samples),
+            'faithfulness_metric': np.random.uniform(0.6, 1.0, size=num_samples),
+            'xai_technique': np.random.choice(['Saliency Map', 'Counterfactual', 'LIME'], size=num_samples)
+        }
 
-    if page == "Page 1: Introduction & Data Setup":
-        from application_pages.page1 import run_page1
-        run_page1(filtered_df)
-    elif page == "Page 2: XAI Concepts & Saliency Map":
-        from application_pages.page2 import run_page2
-        run_page2(filtered_df)
-    elif page == "Page 3: Counterfactuals & Trend Analysis":
-        from application_pages.page3 import run_page3
-        run_page3(filtered_df)
+        return pd.DataFrame(data)
+
+    @st.cache_data # Cache saliency data generation
+    def generate_saliency_data(llm_outputs):
+        """Generates synthetic token-level saliency scores for a given series of LLM text outputs."""
+        saliency_records = []
+        for index, text in llm_outputs.items():
+            if isinstance(text, str): # Ensure text is a string
+                for token in text.split():
+                    saliency_records.append([index, token, np.random.rand()])
+        
+        if not saliency_records:
+            return pd.DataFrame(columns=['output_index', 'token', 'saliency_score'])
+
+        return pd.DataFrame(
+            saliency_records,
+            columns=['output_index', 'token', 'saliency_score']
+        )
+
+    def validate_and_summarize_data(dataframe):
+        """Performs data integrity checks and prints summary statistics."""
+        st.markdown("### 9. Data Validation and Summary Statistics")
+        st.markdown("This section ensures the generated data is well-formed. It confirms expected column names and data types, checks for missing values in critical fields, and provides summary statistics for numeric and categorical columns. This step is crucial for data integrity before further analysis.")
+
+        expected_columns = {
+            'model_confidence': 'float64',
+            'explanation_quality_score': 'float64',
+            'faithfulness_metric': 'float64',
+            'true_label': 'object',
+            'xai_technique': 'object'
+        }
+
+        for col, dtype in expected_columns.items():
+            if col not in dataframe.columns:
+                st.warning(f"Warning: Missing expected column: {col}")
+            else:
+                if dataframe[col].dtype != dtype:
+                    st.warning(f"Warning: Column '{col}' has incorrect dtype: {dataframe[col].dtype}, expected {dtype}")
+
+        if dataframe[['model_confidence', 'explanation_quality_score', 'faithfulness_metric']].isnull().any().any():
+            st.error("Missing values found in critical fields")
+        else:
+            st.success("No missing values found in critical fields.")
+
+        if dataframe.empty:
+            st.warning("DataFrame is empty")
+            return
+
+        st.markdown("#### Numerical Summary:")
+        st.dataframe(dataframe.describe())
+
+        st.markdown("#### Categorical Summary:")
+        for col in dataframe.select_dtypes(include=['object']).columns:
+            if col in ['prompt', 'llm_output']: continue
+            st.write(f"**{col} value counts:**")
+            st.dataframe(dataframe[col].value_counts())
+
+    def visualize_saliency_map(llm_output, token_scores, threshold=0.5):
+        """Renders an LLM output string as HTML, visually highlighting tokens whose saliency scores exceed a specified threshold."""
+        highlighted_parts = []
+        for item in token_scores:
+            if len(item) == 2:
+                token, score = item
+                if score >= threshold:
+                    highlighted_parts.append(f'<span style="background-color: yellow;">{token}</span>')
+                else:
+                    highlighted_parts.append(token)
+        
+        html_content = " ".join(highlighted_parts)
+        st.markdown(html_content, unsafe_allow_html=True)
+
+    def generate_counterfactual_explanation(original_prompt, original_output, current_model_accuracy):
+        """Simulates a counterfactual explanation by creating a slightly modified version of an original prompt and a corresponding altered output."""
+        if not isinstance(original_prompt, str):
+            raise TypeError("original_prompt must be a string.")
+        if not isinstance(original_output, str):
+            raise TypeError("original_output must be a string.")
+        if not isinstance(current_model_accuracy, (int, float)):
+            raise TypeError("current_model_accuracy must be a float or an integer.")
+
+        counterfactual_prompt = f"What if the question was: {original_prompt.replace('a', 'another')}"
+        counterfactual_output = f"An alternative answer might be: {original_output[::-1]}"
+
+        return {
+            'original_prompt': original_prompt,
+            'original_output': original_output,
+            'counterfactual_prompt': counterfactual_prompt,
+            'counterfactual_output': counterfactual_output
+        }
+
+    def plot_faithfulness_trend(dataframe, x_axis, y_axis, hue_column, title):
+        """Generates and displays a line plot to visualize the trend of a faithfulness metric over time."""
+        fig, ax = plt.subplots(figsize=(12, 7))
+        sns.lineplot(
+            data=dataframe,
+            x=x_axis,
+            y=y_axis,
+            hue=hue_column,
+            marker='o',
+            palette='viridis',
+            ax=ax
+        )
+        ax.set_title(title, fontsize=16)
+        ax.set_xlabel(x_axis.replace('_', ' ').title(), fontsize=12)
+        ax.set_ylabel(y_axis.replace('_', ' ').title(), fontsize=12)
+        plt.xticks(rotation=45, ha='right')
+        plt.legend(title=hue_column.replace('_', ' ').title(), fontsize=12)
+        st.pyplot(fig)
+        plt.close(fig)
+
+    def plot_quality_vs_accuracy(dataframe, x_axis, y_axis, title):
+        """Creates and displays a scatter plot to examine the relationship and potential trade-offs between model accuracy and explanation quality score."""
+        if not isinstance(dataframe, pd.DataFrame):
+            raise AttributeError("The 'dataframe' argument must be a pandas DataFrame.")
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        sns.scatterplot(data=dataframe, x=x_axis, y=y_axis, palette='viridis', ax=ax)
+        
+        ax.set_title(title, fontsize=16)
+        ax.set_xlabel(x_axis.replace('_', ' ').title(), fontsize=12)
+        ax.set_ylabel(y_axis.replace('_', ' ').title(), fontsize=12)
+        st.pyplot(fig)
+        plt.close(fig)
+
+    def plot_aggregated_saliency_heatmap(saliency_dataframe, top_n_tokens, title):
+        """Generates and displays a heatmap visualizing the aggregated influence of the most important input tokens across multiple LLM outputs."""
+        if saliency_dataframe.empty:
+            st.warning("Saliency data is empty, cannot generate heatmap.")
+            return
+        
+        if not isinstance(top_n_tokens, int) or top_n_tokens <= 0:
+            raise ValueError("top_n_tokens must be a positive integer")
+
+        aggregated_saliency = saliency_dataframe.groupby('token')['saliency_score'].mean()
+        if aggregated_saliency.empty:
+            st.warning("No tokens found in saliency data for heatmap.")
+            return
+
+        top_tokens = aggregated_saliency.sort_values(ascending=False).head(top_n_tokens)
+
+        heatmap_data = pd.DataFrame(top_tokens).rename(columns={'saliency_score': 'Aggregated Saliency'})
+
+        if heatmap_data.empty:
+            st.warning("No top tokens to display in heatmap.")
+            return
+
+        fig, ax = plt.subplots(figsize=(10, 8))
+        sns.heatmap(
+            heatmap_data, 
+            annot=True, 
+            cmap='viridis', 
+            fmt='.3f',
+            cbar_kws={'label': 'Aggregated Saliency Score'},
+            ax=ax
+        )
+
+        ax.set_title(title, fontsize=16)
+        ax.set_ylabel('Token', fontsize=12)
+        plt.yticks(rotation=0)
+        plt.tight_layout()
+        st.pyplot(fig)
+        plt.close(fig)
+
+    def filter_by_verbosity(dataframe, verbosity_threshold):
+        """Filters a DataFrame based on a proxy for explanation verbosity."""
+        if dataframe.empty:
+            return pd.DataFrame()
+        return dataframe[dataframe['explanation_quality_score'] >= verbosity_threshold]
+
+    def filter_by_confidence(dataframe, confidence_threshold):
+        """Filters a DataFrame to include only rows where 'model_confidence' meets a specified minimum threshold."""
+        if dataframe.empty:
+            return pd.DataFrame()
+        return dataframe[dataframe['model_confidence'] >= confidence_threshold]
+
+    def main():
+        st.title("Explainable AI (XAI) for LLMs")
+
+        #  Sidebar for Global Controls 
+        st.sidebar.title("XAI for LLMs")
+        num_samples_input = st.sidebar.slider(
+            "Number of synthetic LLM samples:", 
+            100, 
+            2000, 
+            500, 
+            help="Adjust the number of LLM interaction records to generate."
+        )
+
+        if st.sidebar.button("Generate/Update Data", help="Click to generate new synthetic data."):
+            with st.spinner("Generating LLM data..."):
+                st.session_state['df_llm_data'] = generate_llm_data(num_samples_input)
+                # Generate saliency for a subset to avoid excessive computation
+                # Using .head() is fine for demonstration; in real app, might sample or generate on demand
+                if not st.session_state['df_llm_data'].empty:
+                    st.session_state['df_saliency'] = generate_saliency_data(
+                        st.session_state['df_llm_data']['llm_output'].head(max(10, num_samples_input // 50))
+                    )
+                else:
+                    st.session_state['df_saliency'] = pd.DataFrame()
+            st.sidebar.success("Data generated successfully!")
+
+        # Initial data generation on first run if not present
+        if st.session_state['df_llm_data'].empty and num_samples_input > 0:
+            with st.spinner("Initializing LLM data..."):
+                st.session_state['df_llm_data'] = generate_llm_data(num_samples_input)
+                if not st.session_state['df_llm_data'].empty:
+                    st.session_state['df_saliency'] = generate_saliency_data(
+                        st.session_state['df_llm_data']['llm_output'].head(max(10, num_samples_input // 50))
+                    )
+                else:
+                    st.session_state['df_saliency'] = pd.DataFrame()
+            st.sidebar.success("Initial data generated successfully!")
+
+        st.sidebar.divider()
+
+        #  Main Content Area 
+        st.markdown("## 1. Notebook Overview")
+        st.markdown("### Learning Goals")
+        st.markdown('''
+    This application aims to provide a practical understanding of Explainable AI (XAI) concepts and techniques as applied to Large Language Models (LLMs). Upon completion, users will be able to:
+    - Understand the core insights presented regarding XAI and LLMs.
+    - Distinguish clearly between interpretability and transparency in the context of AI models.
+    - Review and conceptually apply different XAI techniques, specifically saliency maps and counterfactual explanations.
+    - Analyze the inherent trade-offs between model performance (e.g., accuracy) and the explainability of its decisions.
+    ''')
+
+        st.markdown("## 2. Setup and Library Imports")
+        st.markdown("This section describes the necessary Python libraries for data generation, manipulation, analysis, and visualization. The environment is pre-configured for executing the steps.")
+
+        st.markdown("## 3. Overview of Synthetic Data Generation")
+        st.markdown("This section explains the rationale behind using synthetic data. Given the complexity and computational cost of working with real LLMs for illustrative purposes, synthetic data will be generated to simulate LLM inputs, outputs, and various XAI-related metrics. This approach allows for a controlled environment to explore XAI concepts.")
+
+        #  Data Generation & Inspection 
+        st.header("4. Data Generation & Inspection")
+        if not st.session_state['df_llm_data'].empty:
+            st.markdown("### 5. Display of Synthetic Data")
+            st.markdown("A glimpse of the generated synthetic dataset:")
+            st.dataframe(st.session_state['df_llm_data'].head())
+        else:
+            st.info("Please generate data using the sidebar control.")
+
+        st.markdown("## 6. Explanation of Synthetic Data Generation")
+        st.markdown(r'''
+    This section explains the structure of the generated synthetic dataset, detailing each column and its purpose in simulating LLM interactions and XAI metrics. It highlights how these synthetic values will enable the exploration of XAI concepts.
+
+    - **timestamp**: The date and time of the interaction.
+    - **prompt**: The input text given to the LLM.
+    - **llm_output**: The text generated by the LLM.
+    - **true_label**: A ground-truth label for classification tasks.
+    - **model_confidence**: The model's confidence in its prediction (a score between 0 and 1).
+    - **model_accuracy**: Whether the model's prediction was correct (1) or not (0).
+    - **explanation_quality_score**: A score representing the quality of the explanation ($Q_{exp}$).
+    - **faithfulness_metric**: A score representing how consistent the explanation is with the model's behavior.
+    - **xai_technique**: The XAI technique used for the explanation.
+    ''')
+
+        if st.button("Run Data Validation", help="Perform checks on generated data."):
+            if not st.session_state['df_llm_data'].empty:
+                validate_and_summarize_data(st.session_state['df_llm_data'])
+            else:
+                st.warning("Please generate data first to run validation.")
+
+        #  Core XAI Concepts 
+        st.header("10. Core XAI Concepts")
+        st.markdown("## 11. Interpretability vs. Transparency")
+        st.markdown('''
+    This section delves into the fundamental distinction between interpretability and transparency in AI.
+    - **Interpretability** refers to understanding *why* a model made a specific decision. It's often about understanding the relationship between inputs and outputs.
+    - **Transparency** refers to comprehending the *inner workings* of a model, including its architecture, algorithms, and parameters.
+
+    For LLMs, true transparency is often infeasible due to their scale and complexity. While transparency is about "seeing inside the black box," interpretability is about "making sense of the black box's actions."
+    ''')
+
+        st.markdown("## 12. Introduction to XAI Techniques")
+        st.markdown(r'''
+    This section introduces two key XAI techniques: Saliency Maps and Counterfactual Explanations.
+    - **Saliency Maps:** These techniques highlight input features (e.g., words, pixels) that are most influential in determining a model's output. Conceptually, for an input $X = (x_1, x_2, \dots, x_n)$ and model output $Y$, the saliency for token $x_i$ can be represented as:
+      $$ S(x_i) = \left| \frac{\partial Y}{\partial x_i} \right| $$
+      where $S(x_i)$ indicates the importance of token $x_i$ to the output $Y$.
+
+    - **Counterfactual Explanations:** These provide explanations by showing what minimal change to the input would have resulted in a different, desired output. This answers the question "What if...?" For an input $X$ leading to an output $Y$, a counterfactual explanation suggests a perturbed input $X'$ such that the model's output changes to a desired $Y' \ne Y$, i.e., $ \text{Model}(X + \Delta X) = Y' $ with minimal $ \Delta X $.
+    ''')
+
+        #  XAI Technique Simulations 
+        st.header("13. XAI Technique Simulations")
+        if not st.session_state['df_llm_data'].empty and not st.session_state['df_saliency'].empty:
+            st.markdown("### 14. Saliency Map Visualization")
+            sample_index_options = list(st.session_state['df_llm_data'].index)
+            selected_sample_index = st.number_input(
+                "Select sample index for Saliency Map:", 
+                min_value=min(sample_index_options) if sample_index_options else 0,
+                max_value=max(sample_index_options) if sample_index_options else 0,
+                value=sample_index_options[0] if sample_index_options else 0,
+                help="Select a specific LLM interaction sample to visualize its saliency map."
+            )
+
+            if not st.session_state['df_llm_data'].empty and selected_sample_index in st.session_state['df_llm_data'].index:
+                llm_output_sample = st.session_state['df_llm_data'].loc[selected_sample_index, 'llm_output']
+                
+                saliency_scores_for_sample_df = st.session_state['df_saliency'][
+                    st.session_state['df_saliency']['output_index'] == selected_sample_index
+                ]
+                
+                saliency_scores_sample = saliency_scores_for_sample_df[['token', 'saliency_score']].values.tolist()
+                
+                saliency_threshold = st.slider(
+                    "Saliency Highlight Threshold:", 
+                    0.0, 
+                    1.0, 
+                    0.7, 
+                    help="Tokens with saliency scores above this threshold will be highlighted in yellow."
+                )
+
+                st.write("Original Text:")
+                st.write(llm_output_sample)
+                st.write(f"\nSaliency Map (threshold = {saliency_threshold}):")
+                visualize_saliency_map(llm_output_sample, saliency_scores_sample, saliency_threshold)
+
+                st.markdown("## 15. Explanation of Saliency Map Visualization")
+                st.markdown("This section interprets the visualized saliency map. It explains that the highlighted words are conceptually the most influential tokens in the LLM's decision for that particular output, based on our synthetic scoring.")
+            else:
+                st.info("Please ensure data is generated and a valid sample index is selected for Saliency Map visualization.")
+
+            st.markdown("### 16. Counterfactual Explanation Simulation")
+            if not st.session_state['df_llm_data'].empty and selected_sample_index in st.session_state['df_llm_data'].index:
+                original_prompt = st.session_state['df_llm_data'].loc[selected_sample_index, 'prompt']
+                original_output = st.session_state['df_llm_data'].loc[selected_sample_index, 'llm_output']
+                model_accuracy = st.session_state['df_llm_data'].loc[selected_sample_index, 'model_accuracy']
+                
+                counterfactual = generate_counterfactual_explanation(original_prompt, original_output, model_accuracy)
+                
+                st.write("#### Original Interaction:")
+                st.write(f"**Prompt:** {counterfactual['original_prompt']}")
+                st.write(f"**Output:** {counterfactual['original_output']}")
+                
+                st.write("#### Counterfactual Interaction:")
+                st.write(f"**Counterfactual Prompt:** {counterfactual['counterfactual_prompt']}")
+                st.write(f"**Counterfactual Output:** {counterfactual['counterfactual_output']}")
+
+                st.markdown("## 18. Explanation of Counterfactual Explanation")
+                st.markdown("This section interprets the simulated counterfactual explanation. It explains that by making a small, defined change to the input prompt, a different output is achieved, conceptually showing what input conditions would lead to an alternative model decision.")
+            else:
+                st.info("Please ensure data is generated and a valid sample index is selected for Counterfactual Explanation simulation.")
+        else:
+            st.info("Please generate data in the sidebar to simulate XAI techniques.")
+
+        #  Core Visualizations 
+        st.header("19. Core Visualizations")
+        if not st.session_state['df_llm_data'].empty:
+            st.markdown("### 20. Faithfulness Metric over Time (Trend Plot)")
+            plot_faithfulness_trend(
+                st.session_state['df_llm_data'], 
+                'timestamp', 
+                'faithfulness_metric', 
+                'xai_technique', 
+                'Faithfulness Metric over Time'
+            )
+            st.markdown("## 21. Analysis of Faithfulness Trend Plot")
+            st.markdown("This section provides an analysis of the generated trend plot. It discusses how the faithfulness metric fluctuates over time and compares the consistency of different conceptual XAI techniques with the underlying (synthetic) model behavior. In this synthetic data, the trends are random, but in a real-world scenario, we would look for techniques that consistently maintain high faithfulness.")
+
+            st.markdown("### 22. Explanation Quality Score vs. Model Accuracy (Relationship Plot)")
+            plot_quality_vs_accuracy(
+                st.session_state['df_llm_data'], 
+                'model_accuracy', 
+                'explanation_quality_score', 
+                'Explanation Quality Score vs. Model Accuracy'
+            )
+            st.markdown("## 24. Analysis of Explanation Quality vs. Model Accuracy Plot")
+            st.markdown("This section analyzes the scatter plot, discussing any observed correlations or trade-offs between model accuracy and the perceived quality of explanations. It highlights how achieving high performance might sometimes come at the cost of explainability, and vice versa. In this synthetic dataset, the relationship is random, but in real applications, we might see a negative correlation, indicating a trade-off.")
+
+            st.markdown("### 25. Aggregated Influence of Top N Tokens (Heatmap)")
+            top_n_tokens_heatmap = st.slider(
+                "Number of Top Tokens for Heatmap:", 
+                5, 
+                20, 
+                10, 
+                help="Select how many top tokens to display in the aggregated saliency heatmap."
+            )
+            plot_aggregated_saliency_heatmap(
+                st.session_state['df_saliency'], 
+                top_n_tokens_heatmap, 
+                f'Aggregated Influence of Top {top_n_tokens_heatmap} Tokens'
+            )
+            st.markdown("## 27. Analysis of Aggregated Saliency Heatmap")
+            st.markdown("This section interprets the heatmap, identifying which synthetic tokens consistently show high saliency scores. This provides insights into which input features are generally considered more influential by the (simulated) LLM. The heatmap shows the tokens with the highest average saliency scores across all the outputs we analyzed.")
+        else:
+            st.info("Please generate data in the sidebar to view core visualizations.")
+
+
+        #  Interactive Parameter Simulation 
+        st.header("28. Interactive Parameter Simulation")
+        if not st.session_state['df_llm_data'].empty:
+            st.markdown("## 28. Interactive Parameter Simulation: Explanation Verbosity")
+            st.markdown(r'''
+    This section introduces the concept of 'Explanation Verbosity' ($V_{exp} \in [0, 1]$), which can be used to filter or adjust the level of detail in explanations. A higher $V_{exp}$ would mean more detailed explanations. This section demonstrates how a user parameter could filter explanations based on their quality score, acting as a proxy for verbosity.
+    ''')
+            verbosity_threshold = st.slider(
+                "Explanation Verbosity Threshold ($V_{exp}$):", 
+                0.0, 
+                1.0, 
+                0.9, 
+                help="Filter explanations by quality score. Higher threshold means more detailed/higher quality explanations."
+            )
+            filtered_by_verbosity_df = filter_by_verbosity(st.session_state['df_llm_data'], verbosity_threshold)
+            st.write(f"Number of records with verbosity >= {verbosity_threshold}: {len(filtered_by_verbosity_df)}")
+            if not filtered_by_verbosity_df.empty:
+                st.dataframe(filtered_by_verbosity_df.head())
+            else:
+                st.info("No records match the selected verbosity threshold.")
+
+            st.markdown("### 29. Interactive Parameter Simulation: Model Confidence Filtering")
+            st.markdown("This section demonstrates how to filter LLM interactions based on the model's confidence in its predictions. Users can adjust a threshold to only view explanations for predictions where the model had a certain level of confidence, which is crucial for safety monitoring in critical applications.")
+            confidence_threshold = st.slider(
+                "Model Confidence Threshold:", 
+                0.0, 
+                1.0, 
+                0.95, 
+                help="Filter data by model confidence. Only records with confidence above this threshold will be shown."
+            )
+            filtered_by_confidence_df = filter_by_confidence(st.session_state['df_llm_data'], confidence_threshold)
+            st.write(f"Number of records with confidence >= {confidence_threshold}: {len(filtered_by_confidence_df)}")
+            if not filtered_by_confidence_df.empty:
+                st.dataframe(filtered_by_confidence_df.head())
+            else:
+                st.info("No records match the selected confidence threshold.")
+        else:
+            st.info("Please generate data in the sidebar to use interactive parameter simulations.")
+
+        #  Conclusion & References 
+        st.header("32. Conclusion & References")
+        st.markdown("## 32. Conclusion")
+        st.markdown('''
+    This concluding section summarizes the key learnings from the application, reinforcing the distinction between interpretability and transparency, the application of XAI techniques, and the understanding of trade-offs between model performance and explainability for LLMs. Through synthetic data, we have simulated and visualized key XAI concepts, providing a foundation for applying these ideas to real-world models.
+    ''')
+
+        st.markdown("## 33. References")
+        st.markdown('''
+    - [1] Unit 5: Explainable and Trustworthy AI, Provided Resource Document. This unit discusses interpretability vs transparency, XAI techniques (saliency maps, counterfactual explanations, faithfulness metrics), and the trade-offs between explainability and model performance, noting the absence of explainability in generative AI.
+    ''')
+
     ```
 
-*   **`application_pages/page1.py`**: Handles data generation, upload, initial inspection, and validation.
-*   **`application_pages/page2.py`**: Focuses on XAI concepts, specifically saliency maps.
-*   **`application_pages/page3.py`**: Explores counterfactual explanations and various trend analyses.
+5.  **Run the Application:**
+    Navigate to your `xai_llm_codelab` directory in your terminal and run:
+    ```bash
+    streamlit run app.py
+    ```
+    This will open the Streamlit application in your web browser.
 
 <aside class="positive">
-<b>Tip: Session State and Global Filters</b>
-The use of `st.session_state` is crucial for maintaining data (`df_llm_data`, `df_saliency`) across page navigations in Streamlit. The `filtered_df` is derived from `st.session_state['df_llm_data']` based on the global filters in the sidebar. This filtered data is then passed to the respective page functions, ensuring all visualizations and analyses operate on the user-selected subset of data.
+Remember to activate your virtual environment (if you created one) each time you work on the project.
 </aside>
 
-## 3. Page 1: Introduction & Data Setup
-Duration: 0:15:00
+## 2. Understanding Synthetic Data Generation
+Duration: 0:08:00
 
-The first page of the application, "Introduction & Data Setup," is where you begin your journey by generating or uploading the core LLM interaction data. This data forms the foundation for all subsequent XAI analyses.
+The core of this application relies on synthetically generated data to simulate the complex interactions and metrics associated with LLMs and XAI. This approach is chosen because working with real LLMs for illustrative purposes can be computationally expensive and complex. Synthetic data allows for a controlled environment to demonstrate XAI concepts without needing actual LLM inference.
 
-### 3.1 Executive Summary and Data Overview
+### The `generate_llm_data` Function
 
-Upon navigating to "Page 1: Introduction & Data Setup", you'll see an executive summary outlining the purpose of the application and the business value of XAI for agentic AI safety monitoring. It emphasizes the use of synthetic data for rapid prototyping and explains the constraints and assumptions.
-
-The "Data and Inputs Overview" section clarifies why synthetic data is used (to simulate realistic scenarios without the cost and variability of real LLMs) and highlights its business value for prototyping review workflows.
-
-### 3.2 Generating Core Synthetic LLM Interaction Data
-
-This section allows you to generate a synthetic dataset or upload your own. The synthetic data mirrors common telemetry fields critical for model monitoring and governance teams.
-
-#### The `generate_llm_data` Function
-
-The `generate_llm_data` function in `application_pages/page1.py` is responsible for creating this synthetic dataset. It populates columns like `timestamp`, `prompt`, `llm_output`, `model_confidence`, `model_accuracy`, `explanation_quality_score`, `faithfulness_metric`, and `xai_technique` with plausible random values.
+This function creates a `pandas.DataFrame` representing various aspects of LLM interactions.
 
 ```python
-# application_pages/page1.py (excerpt)
 @st.cache_data
 def generate_llm_data(num_samples):
-    """Generates a synthetic dataset simulating LLM interactions."""
-    # ... input validation ...
-    
-    columns = [
-        'timestamp', 'prompt', 'llm_output', 'true_label', 
-        'model_confidence', 'model_accuracy', 
-        'explanation_quality_score', 'faithfulness_metric', 'xai_technique'
-    ]
-    
+    # ... (function body as seen in xai_for_llms.py)
     data = {
-        'timestamp': [datetime.now() - timedelta(days=i) for i in range(num_samples)],
-        'prompt': [f"Prompt {i+1} about a safety concern." for i in range(num_samples)],
-        'llm_output': [f"LLM output for safety concern {i+1}." for i in range(num_samples)],
-        'true_label': [random.choice(['Safe', 'Unsafe', 'Ambiguous']) for _ in range(num_samples)],
-        'model_confidence': [random.uniform(0.5, 1.0) for _ in range(num_samples)],
-        'model_accuracy': [random.choice([0, 1]) for _ in range(num_samples)],
-        'explanation_quality_score': [random.uniform(0.0, 1.0) for _ in range(num_samples)],
-        'faithfulness_metric': [random.uniform(0.0, 1.0) for _ in range(num_samples)],
-        'xai_technique': [random.choice(['LIME', 'SHAP', 'GradCAM']) for _ in range(num_samples)],
+        'timestamp': sorted(timestamps),
+        'prompt': [fake.sentence() for _ in range(num_samples)],
+        'llm_output': [fake.text(max_nb_chars=100) for _ in range(num_samples)],
+        'true_label': np.random.choice(['Positive', 'Negative', 'Neutral'], size=num_samples),
+        'model_confidence': np.random.uniform(0.5, 1.0, size=num_samples),
+        'model_accuracy': np.random.randint(0, 2, size=num_samples),
+        'explanation_quality_score': np.random.uniform(0.5, 1.0, size=num_samples),
+        'faithfulness_metric': np.random.uniform(0.6, 1.0, size=num_samples),
+        'xai_technique': np.random.choice(['Saliency Map', 'Counterfactual', 'LIME'], size=num_samples)
     }
-    return pd.DataFrame(data, columns=columns)
+    return pd.DataFrame(data)
 ```
 
-The app provides a slider to control the `num_samples` (number of LLM interactions) from 100 to 5000. Click the **"Generate Data"** button to populate `st.session_state['df_llm_data']` with this synthetic information.
+Each column serves a specific purpose in our XAI simulation:
+*   **`timestamp`**: Represents when an LLM interaction occurred.
+*   **`prompt`**: The input text given to the LLM (e.g., a question or instruction).
+*   **`llm_output`**: The response generated by the LLM.
+*   **`true_label`**: A simulated ground-truth label, useful for evaluating classification-like scenarios (e.g., sentiment).
+*   **`model_confidence`**: A score (0-1) indicating the LLM's simulated certainty in its output.
+*   **`model_accuracy`**: A binary value (0 or 1) indicating if the LLM's simulated output was "correct".
+*   **`explanation_quality_score`**: A metric (0-1) representing the perceived quality or usefulness of an explanation generated for this interaction.
+*   **`faithfulness_metric`**: A metric (0-1) indicating how well an explanation reflects the actual reasoning process of the (simulated) LLM. A higher score means the explanation is more faithful.
+*   **`xai_technique`**: The specific XAI technique used for this explanation (e.g., Saliency Map, Counterfactual, LIME).
 
-<aside class="negative">
-<b>Warning: Data Generation Required</b>
-You must generate or upload data in Page 1 before proceeding to other pages, as they rely on `st.session_state['df_llm_data']` to be populated.
-</aside>
+### The `generate_saliency_data` Function
 
-### 3.3 Uploading Custom Data
-
-Alternatively, you can select "Upload Custom Data (CSV)" and provide your own CSV file. This flexibility allows you to apply the same XAI analysis framework to your specific datasets, provided they have similar column structures.
-
-```python
-# application_pages/page1.py (excerpt)
-    data_source = st.radio(
-        "Data Source Selection",
-        ("Generate Synthetic Data", "Upload Custom Data (CSV)"),
-        help="Choose whether to generate synthetic LLM interaction data or upload your own CSV file."
-    )
-
-    if data_source == "Generate Synthetic Data":
-        # ... synthetic data generation controls ...
-    elif data_source == "Upload Custom Data (CSV)":
-        uploaded_file = st.file_uploader(
-            "Upload your LLM interaction data (CSV)",
-            type=["csv"],
-            help="Upload a CSV file containing LLM interaction data. The file should have columns like 'timestamp', 'prompt', 'llm_output', 'model_confidence', etc.",
-            accept_multiple_files=False
-        )
-        if uploaded_file is not None:
-            # ... file processing ...
-```
-
-### 3.4 Initial Inspection and Explanation of the Dataset
-
-Once data is generated or uploaded, the app displays the first few rows and provides an explanation of each column:
-
-*   `timestamp`: When the interaction occurred; supports trend analysis.
-*   `prompt`: Input to the LLM; useful for content stratification and policy audits.
-*   `llm_output`: Model response; used for local explanations (e.g., saliency at the token level).
-*   `true_label`: A synthetic categorical label to simulate downstream evaluation.
-*   `model_confidence` in $[0,1]$: Proxy for model’s certainty; often used to route human review.
-*   `model_accuracy` $\in \{0,1\}$: Simulated correctness flag; enables outcome-level reporting and trade-off studies.
-*   `explanation_quality_score` in $[0,1]$: Proxy for how coherent/useful an explanation is.
-*   `faithfulness_metric` in $[0,1]$: Conceptual alignment between explanations and model behavior.
-*   `xai_technique`: Categorical tag for explanations (e.g., LIME, SHAP, GradCAM in this synthetic example).
-
-<aside class="positive">
-<b>Business Takeaway:</b> These fields are comprehensive enough to build explainability dashboards, route triage by confidence, and demonstrate governance controls without needing access to proprietary data or live models.
-</aside>
-
-### 3.5 Optional: Quick Sanity Check Metric (Accuracy)
-
-The application includes a simple diagnostic check: comparing a heuristic "predicted correctness" (e.g., confidence $\ge 0.75$) to the simulated binary `model_accuracy` flag.
-
-The heuristic correctness is defined as:
-$$ \hat{c}_i = \mathbb{1}[\text{confidence}_i \ge \text{threshold}] $$
-The agreement rate with the true label is:
-$$ A = \frac{1}{N} \sum_i \mathbb{1}[\hat{c}_i = \text{model\_accuracy}_i] $$
-
-You can adjust the `Heuristic Confidence Threshold for Accuracy` using a slider to observe how this agreement rate changes. This diagnostic helps inform threshold settings for human-in-the-loop review in real-world governance scenarios.
-
-### 3.6 Data Validation and Summary Statistics
-
-Finally, the `validate_and_summarize_data` function performs basic data validation and provides summary statistics for the generated/uploaded dataset. This ensures data quality and gives a quick overview of its characteristics.
+This helper function creates token-level saliency scores, used specifically for visualizing Saliency Maps.
 
 ```python
-# application_pages/page1.py (excerpt)
-def validate_and_summarize_data(dataframe: pd.DataFrame):
-    """
-    Performs basic validation and summarizes the dataset.
-    - Checks presence of expected columns
-    - Validates data types for critical numeric fields
-    - Checks missing values in critical fields
-    - Prints descriptive statistics and categorical distributions (adapted for Streamlit)
-    """
-    st.subheader("Data Validation & Summary Statistics")
-    expected_columns = {
-        'timestamp', 'prompt', 'llm_output', 'true_label',
-        'model_confidence', 'model_accuracy', 'explanation_quality_score',
-        'faithfulness_metric', 'xai_technique'
-    }
-
-    missing = expected_columns - set(dataframe.columns)
-    if missing:
-        st.warning(f"**[Warning] Missing expected columns: {missing}**")
-    else:
-        st.success("All expected columns are present.")
-
-    # Validate dtypes for critical numeric fields
-    critical_numeric = ['model_confidence', 'explanation_quality_score', 'faithfulness_metric', 'model_accuracy']
-    for col in critical_numeric:
-        if col in dataframe.columns:
-            if not pd.api.types.is_numeric_dtype(dataframe[col]):
-                st.warning(f"**[Warning] Column '{col}' is not numeric.**")
-        else:
-            st.warning(f"**[Warning] Column '{col}' not found for numeric validation.**")
-
-    # Missing value checks
-    na_counts_critical = dataframe[critical_numeric].isna().sum()
-    if na_counts_critical.sum() == 0:
-        st.info("No missing values found in critical numeric fields.")
-    else:
-        st.warning(f"**[Warning] Missing values in critical numeric fields:\n{na_counts_critical.to_string()}**")
-
-    # Descriptive statistics
-    st.markdown("### Descriptive statistics for numeric columns:")
-    st.dataframe(dataframe.select_dtypes(include='number').describe().T)
-
-    # Value counts for key categoricals
-    for col in ['true_label', 'xai_technique']:
-        if col in dataframe.columns:
-            st.markdown(f"### Value counts for `{col}`:")
-            st.dataframe(dataframe[col].value_counts())
-```
-
-This summary includes:
-*   Presence of expected columns.
-*   Validation of data types for critical numeric fields.
-*   Checks for missing values.
-*   Descriptive statistics for numeric columns.
-*   Value counts for categorical columns like `true_label` and `xai_technique`.
-
-## 4. Page 2: XAI Concepts & Saliency Map
-Duration: 0:10:00
-
-On "Page 2: XAI Concepts & Saliency Map", we delve into two fundamental XAI concepts: interpretability versus transparency, and then focus on saliency maps as a practical technique.
-
-### 4.1 Interpretability vs. Transparency
-
-The page starts by distinguishing between:
-
-*   **Interpretability**: Understanding *why* a model made a specific decision for a given input; focuses on input–output relationships.
-*   **Transparency**: Understanding *how* the model works internally (its architecture, training data, parameters). For large LLMs, full transparency is often not feasible.
-
-<aside class="positive">
-<b>Business Impact:</b> When full transparency is not possible, strong interpretability through techniques like saliency maps and counterfactuals is vital. It supports audits, incident response, and policy compliance without exposing proprietary model internals, especially critical for safety monitoring of agentic systems.
-</aside>
-
-### 4.2 Introduction to XAI Techniques: Saliency Maps
-
-**Saliency Maps** are introduced as a technique that highlights which input tokens most influenced an LLM's output. Conceptually, token importance can be related to the local sensitivity of the output with respect to an input token:
-
-$$ S(x_i) = \left| \frac{\partial Y}{\partial x_i} \right| $$
-
-Here, $S(x_i)$ represents the saliency score for token $x_i$, and it captures how sensitive the model output $Y$ is to small changes in $x_i$. Higher values indicate stronger influence, helping reviewers quickly locate decisive words, which is crucial for identifying critical parts of an LLM's response that indicate safety risks.
-
-### 4.3 Generating Synthetic Saliency Data
-
-Similar to the main LLM interaction data, saliency data is also synthetically generated. The `generate_saliency_data` function in `application_pages/page2.py` takes the LLM outputs and assigns a random saliency score (between 0 and 1) to each token within those outputs.
-
-```python
-# application_pages/page2.py (excerpt)
 @st.cache_data
 def generate_saliency_data(llm_outputs):
-    """Generates synthetic token-level saliency scores for LLM output strings."""
-    data = []
-    for idx, output in enumerate(llm_outputs):
-        tokens = str(output).split() # Ensure output is string
-        if not tokens:
-            # Handle empty strings to avoid errors later
-            data.append((idx, "", 0.0))
-            continue
-        for token in tokens:
-            saliency_score = np.random.rand()
-            data.append((idx, token, saliency_score))
-    return pd.DataFrame(data, columns=['output_index', 'token', 'saliency_score'])
+    # ... (function body as seen in xai_for_llms.py)
+    # Generates a random saliency score for each token in the LLM output.
+    # The 'output_index' links back to the main df_llm_data.
+    return pd.DataFrame(
+        saliency_records,
+        columns=['output_index', 'token', 'saliency_score']
+    )
 ```
+This function breaks down each `llm_output` into individual tokens (words) and assigns a random `saliency_score` to each, simulating how important each token might be to the LLM's decision.
+
+### Interacting with Data Generation in the App
+
+1.  **Locate the Sidebar:** On the left side of your Streamlit application, you'll find a sidebar.
+2.  **Adjust Sample Size:** Use the "Number of synthetic LLM samples:" slider to choose how many records you want to generate (e.g., 500, 1000).
+3.  **Generate/Update Data:** Click the **"Generate/Update Data"** button. Observe the "Generating LLM data..." spinner and the "Data generated successfully!" message.
+4.  **Inspect Initial Data:** Scroll down to the "4. Data Generation & Inspection" section. You'll see the head of the `df_llm_data` DataFrame, giving you a quick overview of the generated synthetic records.
 
 <aside class="positive">
-<b>Note:</b> For consistent indexing, the `generate_saliency_data` function is called using the full `st.session_state['df_llm_data']` from `app.py`, even if `filtered_df` is being passed to `run_page2`. This ensures that the `output_index` in the saliency data consistently maps to the original dataframe's index.
+The `@st.cache_data` decorator ensures that if you adjust the slider back to a previously used number of samples, the data isn't regenerated unnecessarily, significantly speeding up interactions.
 </aside>
 
-The app displays the head of the generated `df_saliency` dataframe, showing `output_index`, `token`, and `saliency_score`. Higher scores conceptually indicate a stronger contribution of that token to the LLM's output.
+## 3. Data Validation and Summary Statistics
+Duration: 0:05:00
 
-### 4.4 Saliency Map Visualization
+Before diving into complex analysis, it's critical to ensure the integrity and quality of our dataset. The `validate_and_summarize_data` function performs essential checks and provides statistical overviews.
 
-The core of this page is the interactive saliency map visualization. The `visualize_saliency_map` function takes an LLM output, the generated saliency scores, the output's index, and a threshold. It then highlights tokens whose saliency scores meet or exceed this threshold.
+### The `validate_and_summarize_data` Function
+
+This function verifies column presence and data types, checks for missing values in key columns, and presents descriptive statistics.
 
 ```python
-# application_pages/page2.py (excerpt)
-def visualize_saliency_map(llm_output, token_scores_df, output_index, threshold=0.5):
-    """
-    Highlights tokens in an LLM output string based on saliency scores using HTML.
-    Tokens with scores at or above the specified threshold are highlighted.
-    """
-    if not isinstance(llm_output, str):
-        return "Invalid LLM output provided."
+def validate_and_summarize_data(dataframe):
+    st.markdown("### 9. Data Validation and Summary Statistics")
+    st.markdown("This section ensures the generated data is well-formed...")
     
-    tokens = llm_output.split()
+    expected_columns = {
+        'model_confidence': 'float64',
+        'explanation_quality_score': 'float64',
+        'faithfulness_metric': 'float64',
+        'true_label': 'object',
+        'xai_technique': 'object'
+    }
     
-    # Filter saliency scores for the specific output_index
-    scores_for_output = token_scores_df[token_scores_df['output_index'] == output_index]
+    # Checks for missing columns and incorrect dtypes
+    # Checks for nulls in critical numeric columns
     
-    # Create a dictionary for quick lookup of scores
-    token_score_map = {row['token']: row['saliency_score'] for _, row in scores_for_output.iterrows()}
-
-    highlighted_tokens = []
-    for token in tokens:
-        # Get the score for the current token, default to 0 if not found
-        score = token_score_map.get(token, 0.0)
-        if score >= threshold:
-            highlighted_tokens.append(f"<span style=\"background-color: yellow;\">{token}</span>")
-        else:
-            highlighted_tokens.append(token)
-            
-    highlighted_text = " ".join(highlighted_tokens)
-    return highlighted_text # Return raw HTML string for st.markdown
+    st.markdown("#### Numerical Summary:")
+    st.dataframe(dataframe.describe()) # Displays descriptive statistics for numeric columns
+    
+    st.markdown("#### Categorical Summary:")
+    for col in dataframe.select_dtypes(include=['object']).columns:
+        if col in ['prompt', 'llm_output']: continue
+        st.write(f"**{col} value counts:**")
+        st.dataframe(dataframe[col].value_counts()) # Displays value counts for categorical columns
 ```
 
-You can select an `Output Index` from the dataset using a number input and adjust the `Saliency Highlight Threshold ($\tau$)` with a slider. Tokens with scores at or above the chosen threshold will be highlighted in yellow, visually representing their conceptual importance.
+### Running Validation in the App
 
-### 4.5 Interpreting the Saliency Map
+1.  **Generate Data:** Ensure you have generated data using the sidebar control (as covered in Step 2).
+2.  **Trigger Validation:** Scroll down to the "Data Generation & Inspection" section and click the **"Run Data Validation"** button.
+3.  **Review Results:**
+    *   Observe the validation messages (warnings for missing columns/incorrect dtypes, success/error for missing values).
+    *   Examine the "Numerical Summary" (mean, std, min, max, quartiles for numeric columns).
+    *   Examine the "Categorical Summary" (value counts for `true_label`, `xai_technique`).
 
-The highlighted words help reviewers, particularly in safety monitoring, to:
-*   Quickly spot decisive phrases related to safety risks.
-*   Compare the highlighted rationale with policy or business rules for compliance.
-*   Identify unexpected drivers of model behavior that may indicate vulnerabilities or unsafe tendencies, requiring mitigation or re-training.
+<aside class="positive">
+Understanding these summaries helps confirm that our synthetic data aligns with expectations and is ready for analysis, mimicking a crucial step in any data science workflow.
+</aside>
 
-## 5. Page 3: Counterfactuals & Trend Analysis
+## 4. Deep Dive into Core XAI Concepts
 Duration: 0:12:00
 
-"Page 3: Counterfactuals & Trend Analysis" introduces another powerful XAI technique—counterfactual explanations—and then moves into trend analysis visualizations that are crucial for ongoing AI safety monitoring.
+This section explores the fundamental theoretical underpinnings of Explainable AI, crucial for effectively using and interpreting XAI techniques for LLMs.
 
-### 5.1 Applying XAI Technique: Counterfactual Explanation
+### Interpretability vs. Transparency
 
-**Counterfactuals** answer the question: "What minimal change to the input would have changed the output?" This technique is vital for understanding recourse, fairness, and debugging model behavior. In agentic AI safety, counterfactuals can illuminate how minor changes in instructions or environmental context might lead an agent to an unsafe outcome.
+These terms are often used interchangeably, but they represent distinct concepts in AI:
 
-Formally, the goal is to find a perturbation $\Delta X$ such that the model output flips:
+*   **Interpretability:** This refers to the ability to understand *why* a model made a specific prediction or decision. It focuses on the relationship between the inputs and the outputs. For LLMs, this might mean understanding which words in a prompt led to a particular part of the generated response. Interpretability aims to answer: "What aspects of the input were most important for this specific output?"
+*   **Transparency:** This refers to comprehending the *internal mechanics* of a model. A transparent model is one whose architecture, algorithms, and parameters are fully understandable. Simple linear regression models are transparent. Complex deep learning models like LLMs are inherently opaque, making full transparency very challenging, if not impossible. Transparency aims to answer: "How does the model actually work internally?"
 
-$$ \text{Model}(X + \Delta X) = Y' \ne Y $$
+<aside class="negative">
+For LLMs, achieving true transparency is generally infeasible due to their immense scale (billions of parameters) and complex non-linear computations. XAI techniques primarily focus on enhancing **interpretability** to make sense of their outputs.
+</aside>
 
-While minimizing the change: minimize $||\Delta X||$ subject to the output flip.
+### Introduction to XAI Techniques
 
-#### The `generate_counterfactual_explanation` Function
+The application focuses on two prominent XAI techniques:
 
-The application simulates a simple counterfactual using the `generate_counterfactual_explanation` function in `application_pages/page3.py`. It proposes a subtly modified input prompt and a corresponding altered output, demonstrating how small changes could conceptually lead to different outcomes.
+#### Saliency Maps
+
+**Concept:** Saliency maps identify and highlight the parts of the input (e.g., words in a sentence, pixels in an image) that are most influential in determining the model's output. They reveal "what the model looked at" when making a decision.
+
+**Mathematical Representation:** For an input $X = (x_1, x_2, \dots, x_n)$ (where $x_i$ could be an input token/word embedding) and a model output $Y$ (e.g., a prediction probability, or a specific token's logit), the saliency score $S(x_i)$ for input feature $x_i$ can conceptually be represented using derivatives:
+$$ S(x_i) = \left| \frac{\partial Y}{\partial x_i} \right| $$
+This formula calculates the magnitude of the change in output $Y$ with respect to a small change in input $x_i$. A larger $S(x_i)$ implies $x_i$ has a greater impact on the output. In practice, approximations or integrated gradients are often used for neural networks.
+
+#### Counterfactual Explanations
+
+**Concept:** Counterfactual explanations provide insights by answering "What if...?" questions. They tell you the *minimum change* required to an input to flip a model's prediction or achieve a desired different output. This helps understand the model's decision boundaries.
+
+**Mathematical Representation:** Given an input $X$ that leads to a model output $Y$, a counterfactual explanation seeks a perturbed input $X'$ such that:
+$$ \text{Model}(X') = Y' $$
+where $Y' \ne Y$ is a desired alternative output, and the "distance" between $X$ and $X'$ (often denoted as $\Delta X$) is minimized. The objective is to find $X'$ that is as close as possible to $X$ but yields a different, specified outcome.
+$$ \min_{\Delta X} \text{Distance}(X, X + \Delta X) \quad \text{s.t.} \quad \text{Model}(X + \Delta X) = Y' $$
+This explains that "if the input had been slightly different ($X'$ instead of $X$), the output would have been $Y'$ instead of $Y$."
+
+<aside class="positive">
+These XAI techniques help bridge the gap between complex LLM outputs and human understanding, fostering trust and enabling better model debugging and responsible use.
+</aside>
+
+## 5. Simulating Saliency Map Explanations
+Duration: 0:07:00
+
+Saliency maps are powerful tools for understanding which parts of an input text contributed most significantly to an LLM's output. Our application simulates this by highlighting words based on their synthetic saliency scores.
+
+### The `visualize_saliency_map` Function
+
+This function takes an LLM output string, a list of token-saliency score pairs, and a threshold. It then generates HTML to display the output, coloring tokens whose scores exceed the threshold.
 
 ```python
-# application_pages/page3.py (excerpt)
-def generate_counterfactual_explanation(original_prompt, original_output, current_model_accuracy):
-    """
-    Generates a counterfactual explanation by proposing a modified input prompt
-    and its resulting output.
-    """
-    # Simulate a minimal modification to the original prompt
-    counterfactual_prompt = original_prompt + " (What if we rephrased the safety concern?)"
+def visualize_saliency_map(llm_output, token_scores, threshold=0.5):
+    highlighted_parts = []
+    for item in token_scores:
+        if len(item) == 2:
+            token, score = item
+            if score >= threshold:
+                highlighted_parts.append(f'<span style="background-color: yellow;">{token}</span>')
+            else:
+                highlighted_parts.append(token)
+    
+    html_content = " ".join(highlighted_parts)
+    st.markdown(html_content, unsafe_allow_html=True)
+```
 
-    # Simulate generating a counterfactual output
-    if current_model_accuracy > 0.5:
-        counterfactual_output = "A subtly different, but still safe, explanation."
-    else:
-        counterfactual_output = "An unsafe or undesirable response due to the rephrasing."
+### Interacting with Saliency Maps in the App
+
+1.  **Navigate:** Scroll down to the "13. XAI Technique Simulations" section and locate "14. Saliency Map Visualization."
+2.  **Select a Sample:** Use the "Select sample index for Saliency Map:" number input. Try changing the index (e.g., from 0 to 5 or 10) to see different LLM outputs.
+3.  **Adjust Threshold:** Use the "Saliency Highlight Threshold:" slider (0.0 to 1.0).
+    *   Set it to a low value (e.g., 0.1) to see more words highlighted.
+    *   Set it to a high value (e.g., 0.9) to see only the most "important" words highlighted.
+    *   Observe how the yellow highlighting changes based on the threshold.
+4.  **Interpret the Visualization:**
+    *   The highlighted words (in yellow) conceptually represent the tokens that our simulated LLM considered most influential in generating that particular output.
+    *   In a real-world scenario, this would help you understand *what parts of your prompt* or *what elements in the LLM's internal state* led to certain words appearing in the output. For example, if a model predicts a negative sentiment, a saliency map might highlight words like "terrible," "horrible," etc.
+
+<aside class="positive">
+Saliency maps are invaluable for debugging LLMs, identifying biases (e.g., if certain non-relevant keywords consistently trigger specific outputs), and ensuring that the model is focusing on appropriate input features.
+</aside>
+
+## 6. Simulating Counterfactual Explanations
+Duration: 0:07:00
+
+Counterfactual explanations offer a different perspective on model behavior by showing "what would have to change for the outcome to be different." This helps identify sensitive input parameters and decision boundaries.
+
+### The `generate_counterfactual_explanation` Function
+
+This function takes an original prompt and output, then creates a slightly modified "counterfactual" prompt and a corresponding altered output. In our synthetic example, the modification is simple (replacing 'a' with 'another' and reversing the output), but it illustrates the core concept.
+
+```python
+def generate_counterfactual_explanation(original_prompt, original_output, current_model_accuracy):
+    # ... (function body as seen in xai_for_llms.py)
+    counterfactual_prompt = f"What if the question was: {original_prompt.replace('a', 'another')}"
+    counterfactual_output = f"An alternative answer might be: {original_output[::-1]}" # Reverse output for a clear change
 
     return {
-        "original_prompt": original_prompt,
-        "original_output": original_output,
-        "counterfactual_prompt": counterfactual_prompt,
-        "counterfactual_output": counterfactual_output
+        'original_prompt': original_prompt,
+        'original_output': original_output,
+        'counterfactual_prompt': counterfactual_prompt,
+        'counterfactual_output': counterfactual_output
     }
 ```
 
-You can select a `Record Index for Counterfactuals` from the available data. The app will then display the original prompt and output, followed by the simulated counterfactual prompt and output.
+### Observing Counterfactuals in the App
 
-### 5.2 Interpreting the Counterfactual Explanation
+1.  **Navigate:** Remain in the "13. XAI Technique Simulations" section and scroll down to "16. Counterfactual Explanation Simulation."
+2.  **Review Interactions:** The application displays:
+    *   **Original Prompt:** The input that led to the original LLM output.
+    *   **Original LLM Output:** The output generated by the simulated LLM.
+    *   **Counterfactual Prompt (simulated):** A slightly modified version of the original prompt.
+    *   **Counterfactual LLM Output (simulated):** The altered output that would result from the counterfactual prompt.
+3.  **Interpret the Explanation:**
+    *   Notice the subtle change in the `Counterfactual Prompt` (e.g., "a" replaced with "another").
+    *   Observe the significant change in the `Counterfactual LLM Output` (the reversed text).
+    *   This simulation demonstrates that a small, specific change to the input can lead to a completely different outcome. In a real LLM, counterfactuals might show which keywords or phrases, if removed or changed, would alter the sentiment, topic, or factual claim of the output.
 
-The counterfactual demonstration reveals how a small prompt change could plausibly lead to a different outcome. This is invaluable for safety monitoring as it:
-*   Helps determine levers for decision recourse (what a user could change to get a safe outcome).
-*   Reveals sensitivity to specific terms or conditions, which is crucial for fairness auditing and identifying adversarial attacks.
-*   Supports root-cause analysis by contrasting original vs. perturbed inputs and outcomes, helping to understand why an agent might deviate from safe behavior.
+<aside class="positive">
+Counterfactuals are excellent for exploring model robustness, understanding fairness implications (e.g., "what if the demographic information was different?"), and defining the minimum conditions for a desired outcome.
+</aside>
 
-### 5.3 Core Visual: Faithfulness Metric Over Time
+## 7. Visualizing Faithfulness Trends of XAI Techniques
+Duration: 0:06:00
 
-This section provides key visualizations for monitoring XAI metrics. The first is a line plot showing the `faithfulness_metric` over time, stratified by `xai_technique`.
+Beyond individual explanations, it's crucial to understand how XAI metrics perform over time and across different techniques. The `faithfulness_metric` quantifies how consistent an explanation is with the model's behavior.
 
-#### The `plot_faithfulness_trend` Function
+### The `plot_faithfulness_trend` Function
+
+This function generates a line plot, visualizing the `faithfulness_metric` over `timestamp`, with different lines for each `xai_technique`.
 
 ```python
-# application_pages/page3.py (excerpt)
 def plot_faithfulness_trend(dataframe, x_axis, y_axis, hue_column, title):
-    """
-    Generates a line plot showing trends of a specified metric over time for different categories using Plotly.
-    """
-    if dataframe.empty:
-        st.warning("DataFrame is empty, cannot plot faithfulness trend.")
-        return
-
-    # ... input validation ...
-
-    fig = px.line(dataframe, x=x_axis, y=y_axis, color=hue_column, title=title)
-    fig.update_layout(
-        title_font_size=20,
-        legend_title_font_size=14,
-        xaxis_title_font_size=14,
-        yaxis_title_font_size=14
+    fig, ax = plt.subplots(figsize=(12, 7))
+    sns.lineplot(
+        data=dataframe,
+        x=x_axis,
+        y=y_axis,
+        hue=hue_column,
+        marker='o',
+        palette='viridis',
+        ax=ax
     )
-    st.plotly_chart(fig, use_container_width=True)
+    # ... (plot styling)
+    st.pyplot(fig)
+    plt.close(fig)
 ```
 
-Monitoring explanation faithfulness over time helps detect drift in how well explanations align with modeled behavior. This is essential for governance dashboards and incident review, especially for understanding the long-term reliability of safety explanations in agentic systems. A decreasing trend in faithfulness might indicate that the model's explanations are becoming less reliable or that the model's behavior has subtly shifted.
+### Analyzing the Faithfulness Trend Plot in the App
 
-### 5.4 Explanation Quality vs. Model Accuracy
+1.  **Navigate:** Scroll down to the "19. Core Visualizations" section and find "20. Faithfulness Metric over Time (Trend Plot)."
+2.  **Examine the Plot:**
+    *   The x-axis represents `timestamp`, showing the progression over time.
+    *   The y-axis represents the `faithfulness_metric`.
+    *   Each colored line corresponds to a different `xai_technique` (Saliency Map, Counterfactual, LIME).
+3.  **Interpret the Trends:**
+    *   In a real scenario, you would look for `xai_technique` lines that consistently stay high, indicating that those explanation methods are reliably reflecting the LLM's true decision-making process.
+    *   Fluctuations might suggest instability in the explanation technique or variations in the model's behavior that are difficult to explain consistently.
+    *   Since our data is synthetic, the trends will appear somewhat random, but the conceptual takeaway remains: we want XAI techniques that are consistently faithful to the model they are explaining.
 
-This scatter plot illustrates the potential trade-off between the quality of an explanation and the model's accuracy.
+<aside class="negative">
+A low faithfulness score means the explanation might be misleading, potentially attributing importance to features the model didn't actually use, or missing critical features the model did use. This undermines trust in the explanation itself.
+</aside>
 
-#### The `plot_explanation_accuracy_relationship` Function
+## 8. Analyzing Explanation Quality vs. Model Accuracy
+Duration: 0:06:00
+
+A common challenge in XAI is the potential trade-off between model performance (e.g., accuracy) and its explainability. This plot helps visualize this relationship.
+
+### The `plot_quality_vs_accuracy` Function
+
+This function generates a scatter plot comparing `model_accuracy` (whether the model was correct) with the `explanation_quality_score`.
 
 ```python
-# application_pages/page3.py (excerpt)
-def plot_explanation_accuracy_relationship(dataframe):
-    """
-    Generates a scatter plot of explanation quality vs. model accuracy using Plotly.
-    """
-    if dataframe.empty:
-        st.warning("DataFrame is empty, cannot plot explanation quality vs. accuracy.")
-        return
-    
-    # ... column validation ...
-
-    fig = px.scatter(dataframe, x='model_accuracy', y='explanation_quality_score', color='xai_technique',
-                     title="Explanation Quality vs. Model Accuracy",
-                     labels={'model_accuracy': "Simulated Model Accuracy (0=Incorrect, 1=Correct)", 'explanation_quality_score': "Explanation Quality Score"},
-                     opacity=0.6)
-    fig.update_layout(
-        title_font_size=20,
-        legend_title_font_size=14,
-        xaxis_title_font_size=14,
-        yaxis_title_font_size=14
-    )
-    st.plotly_chart(fig, use_container_width=True)
+def plot_quality_vs_accuracy(dataframe, x_axis, y_axis, title):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.scatterplot(data=dataframe, x=x_axis, y=y_axis, palette='viridis', ax=ax)
+    # ... (plot styling)
+    st.pyplot(fig)
+    plt.close(fig)
 ```
 
-Understanding this relationship is vital for balancing interpretability requirements with model performance goals in safety-critical applications. For instance, a highly accurate model with poor explanations might be harder to debug if it makes a safety error, suggesting a need to invest more in explanation quality or choose different XAI techniques.
+### Analyzing the Explanation Quality vs. Model Accuracy Plot in the App
 
-### 5.5 Average Faithfulness by XAI Technique
+1.  **Navigate:** Continue in the "19. Core Visualizations" section and find "22. Explanation Quality Score vs. Model Accuracy (Relationship Plot)."
+2.  **Examine the Plot:**
+    *   The x-axis represents `model_accuracy` (0 or 1).
+    *   The y-axis represents `explanation_quality_score`.
+    *   Each point is an individual LLM interaction record.
+3.  **Interpret the Relationship:**
+    *   In a real-world setting, you might observe a trend:
+        *   Models with very high accuracy might sometimes be harder to explain (lower quality scores), indicating a trade-off.
+        *   Simpler, more interpretable models might have slightly lower accuracy but higher explanation quality.
+    *   The goal is often to find a "sweet spot" where both accuracy and explainability are acceptable.
+    *   In our synthetic data, the relationship is randomized, so you won't see a strong correlation, but the concept of analyzing this trade-off is crucial for real applications.
 
-This bar chart provides an aggregated comparison of the average faithfulness metric across different XAI techniques.
+<aside class="positive">
+This visualization helps stakeholders understand the practical implications of choosing a more complex, high-performing model versus a simpler, more explainable one.
+</aside>
 
-#### The `plot_average_faithfulness_by_technique` Function
+## 9. Aggregating Saliency for Global Insights
+Duration: 0:07:00
+
+While individual saliency maps provide local explanations, aggregating saliency scores across many interactions can reveal globally important tokens or features for an LLM.
+
+### The `plot_aggregated_saliency_heatmap` Function
+
+This function calculates the mean saliency score for each token across all analyzed LLM outputs and then displays the top N most influential tokens in a heatmap.
 
 ```python
-# application_pages/page3.py (excerpt)
-def plot_average_faithfulness_by_technique(dataframe):
-    """
-    Generates a bar chart of average faithfulness by XAI technique using Plotly.
-    """
-    if dataframe.empty:
-        st.warning("DataFrame is empty, cannot plot average faithfulness by technique.")
-        return
+def plot_aggregated_saliency_heatmap(saliency_dataframe, top_n_tokens, title):
+    # ... (function body as seen in xai_for_llms.py)
+    aggregated_saliency = saliency_dataframe.groupby('token')['saliency_score'].mean()
+    top_tokens = aggregated_saliency.sort_values(ascending=False).head(top_n_tokens)
     
-    # ... column validation ...
-    
-    avg_faithfulness = dataframe.groupby('xai_technique')['faithfulness_metric'].mean().reset_index()
-    fig = px.bar(avg_faithfulness, x='xai_technique', y='faithfulness_metric',
-                 title="Average Faithfulness by XAI Technique",
-                 labels={'xai_technique': "XAI Technique", 'faithfulness_metric': "Average Faithfulness Metric"})
-    fig.update_layout(
-        title_font_size=20,
-        xaxis_title_font_size=14,
-        yaxis_title_font_size=14
+    heatmap_data = pd.DataFrame(top_tokens).rename(columns={'saliency_score': 'Aggregated Saliency'})
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    sns.heatmap(
+        heatmap_data, 
+        annot=True, 
+        cmap='viridis', 
+        fmt='.3f',
+        cbar_kws={'label': 'Aggregated Saliency Score'},
+        ax=ax
     )
-    st.plotly_chart(fig, use_container_width=True)
+    # ... (plot styling)
+    st.pyplot(fig)
+    plt.close(fig)
 ```
 
-This chart helps in evaluating which explanation techniques consistently provide better alignment with the model's behavior, guiding the selection of techniques for robust safety monitoring and ensuring that the chosen XAI methods are indeed reliable for understanding agentic AI decisions.
+### Analyzing the Aggregated Saliency Heatmap in the App
 
-## 6. Global Filtering and Conclusion
+1.  **Navigate:** Continue in the "19. Core Visualizations" section and find "25. Aggregated Influence of Top N Tokens (Heatmap)."
+2.  **Adjust Top Tokens:** Use the "Number of Top Tokens for Heatmap:" slider (e.g., 5 to 20).
+3.  **Examine the Heatmap:**
+    *   The heatmap displays the tokens with the highest *average* saliency scores across all the synthetic LLM outputs considered.
+    *   The color intensity and numerical labels indicate the aggregated importance of each token.
+4.  **Interpret Global Influence:**
+    *   This heatmap provides a global understanding of which specific words or tokens are generally most impactful on the simulated LLM's outputs, regardless of individual interactions.
+    *   In a real-world scenario, this could identify common trigger words, biases, or crucial vocabulary that the LLM frequently relies on.
+
+<aside class="positive">
+Aggregated saliency helps in understanding the general behavior of an LLM, not just single instances. This is valuable for model debugging and ensuring that the model is not relying on spurious correlations.
+</aside>
+
+## 10. Interactive Exploration with Filters
+Duration: 0:08:00
+
+Interactive filters allow users to dynamically explore subsets of the data based on specific criteria, mimicking real-world scenarios where you might want to focus on high-confidence predictions or highly verbose explanations.
+
+### The `filter_by_verbosity` and `filter_by_confidence` Functions
+
+These simple functions filter the main DataFrame based on user-defined thresholds for `explanation_quality_score` (as a proxy for verbosity) and `model_confidence`.
+
+```python
+def filter_by_verbosity(dataframe, verbosity_threshold):
+    if dataframe.empty:
+        return pd.DataFrame()
+    return dataframe[dataframe['explanation_quality_score'] >= verbosity_threshold]
+
+def filter_by_confidence(dataframe, confidence_threshold):
+    if dataframe.empty:
+        return pd.DataFrame()
+    return dataframe[dataframe['model_confidence'] >= confidence_threshold]
+```
+
+### Using Interactive Filters in the App
+
+1.  **Navigate:** Scroll down to the "28. Interactive Parameter Simulation" section.
+
+2.  **Explanation Verbosity Filtering:**
+    *   Find "28. Interactive Parameter Simulation: Explanation Verbosity."
+    *   Use the "Explanation Verbosity Threshold ($V_{exp}$):" slider (0.0 to 1.0).
+    *   Observe how the "Number of records with verbosity >= [threshold]:" changes.
+    *   The displayed DataFrame `head()` updates to show only records that meet the selected quality threshold. This simulates how users might filter for more detailed or high-quality explanations.
+
+3.  **Model Confidence Filtering:**
+    *   Find "29. Interactive Parameter Simulation: Model Confidence Filtering."
+    *   Use the "Model Confidence Threshold:" slider (0.0 to 1.0).
+    *   Observe how the "Number of records with confidence >= [threshold]:" changes.
+    *   The displayed DataFrame `head()` updates to show only records where the simulated LLM had a certain level of confidence in its prediction. This is useful for focusing on critical or uncertain predictions.
+
+<aside class="positive">
+Interactive filtering is a practical way to explore specific scenarios and refine your analysis, making XAI tools more adaptable to various user needs.
+</aside>
+
+## 11. Conclusion and Further Exploration
 Duration: 0:05:00
 
-The Streamlit application includes powerful **Global Filtering Controls** in the sidebar, which significantly enhance its utility for monitoring and analysis.
+Congratulations! You have completed this codelab on Explainable AI for LLMs.
 
-### 6.1 Global Filtering Controls
+### Conclusion
 
-In `app.py`, these filters are applied to the `df_llm_data` before it is passed as `filtered_df` to any of the application pages.
+Throughout this codelab, you've gained a foundational understanding of XAI concepts and their application to Large Language Models:
+*   We clarified the distinction between **interpretability** (understanding *why* a model made a decision) and **transparency** (understanding *how* the model works internally), emphasizing interpretability for LLMs.
+*   You explored two key XAI techniques: **Saliency Maps** for identifying influential input features and **Counterfactual Explanations** for understanding decision boundaries through "what if" scenarios.
+*   You analyzed synthetic data visualizations demonstrating **faithfulness** of explanations and the potential **trade-offs** between explanation quality and model accuracy.
+*   You interacted with simulations of these techniques and practiced using filters to explore specific subsets of LLM interaction data.
 
-```python
-# app.py (excerpt)
-    st.sidebar.markdown("## Global Filters")
-    if not st.session_state['df_llm_data'].empty:
-        min_quality = st.sidebar.slider("Min Explanation Quality Score", 0.0, 1.0, 0.0, 0.01, help="Filter to show only records with explanation quality scores above this value.")
-        min_confidence = st.sidebar.slider("Min Model Confidence", 0.0, 1.0, 0.0, 0.01, help="Filter to show only records with model confidence scores above this value.")
+While this application uses synthetic data, the principles and interactive explorations presented here are directly transferable to real-world LLM deployments. XAI is an evolving field, and techniques continue to improve, helping us build more trustworthy, reliable, and ethical AI systems.
 
-        xai_techniques = st.session_state['df_llm_data']['xai_technique'].unique().tolist()
-        selected_techniques = st.sidebar.multiselect("Filter by XAI Technique", xai_techniques, default=xai_techniques, help="Select which XAI techniques to include in the analysis and visualizations.")
+### Further Exploration
 
-        # Apply global filters
-        filtered_df = st.session_state['df_llm_data'][
-            (st.session_state['df_llm_data']['explanation_quality_score'] >= min_quality) &
-            (st.session_state['df_llm_data']['model_confidence'] >= min_confidence) &
-            (st.session_state['df_llm_data']['xai_technique'].isin(selected_techniques))
-        ].copy()
-    else:
-        filtered_df = pd.DataFrame() # Empty if no data yet
+*   **Implement Real XAI Libraries:** Explore libraries like LIME (Local Interpretable Model-agnostic Explanations), SHAP (SHapley Additive exPlanations), or Captum (for PyTorch models) to generate actual explanations for small LLMs or other deep learning models.
+*   **Explore Other XAI Techniques:** Research other XAI methods like influence functions, concept activation vectors (TCAV), or gradient-based methods.
+*   **Consider Ethical Implications:** Reflect on how XAI can address issues of fairness, bias, and accountability in LLMs.
+*   **Apply to Specific Use Cases:** Think about how XAI could be particularly valuable in your domain (e.g., healthcare, finance, legal) for understanding LLM behavior.
+
+### References
+
+*   [1] Unit 5: Explainable and Trustworthy AI, Provided Resource Document. This unit discusses interpretability vs transparency, XAI techniques (saliency maps, counterfactual explanations, faithfulness metrics), and the trade-offs between explainability and model performance, noting the absence of explainability in generative AI.
+
+<aside class="positive">
+Thank you for your engagement with this codelab. May your journey into building explainable and trustworthy AI be fruitful!
+</aside>
